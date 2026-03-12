@@ -8,7 +8,7 @@
   [![Contributions Welcome](https://img.shields.io/badge/Contributions-Welcome-brightgreen?style=flat-square)](CONTRIBUTING.md)
   [![Community](https://img.shields.io/badge/Community-Telegram-blue?logo=telegram&style=flat-square)](https://t.me/cremniy_com)
 
-  [English](README.md) • Russian
+  [English](README.md) • Русский
   
 </div>
 
