@@ -487,6 +487,24 @@ void QCodeEditor::keyPressEvent(QKeyEvent* e) {
 
   if (!completerSkip) {
 
+    // Ctrl+Plus / Ctrl+Minus zoom
+    if ((e->modifiers() & Qt::ControlModifier) &&
+        (e->key() == Qt::Key_Plus || e->key() == Qt::Key_Equal || e->key() == Qt::Key_Minus)) {
+      double delta = (e->key() == Qt::Key_Minus) ? 1 / 1.1 : 1.1;
+      scaleFactor *= delta;
+      QFont f = font();
+      f.setPointSizeF(12 * scaleFactor);
+      setFont(f);
+      QFontMetrics fm(f);
+      double tabWidth = fm.horizontalAdvance(' ') * 4;
+      QTextOption opt = document()->defaultTextOption();
+      opt.setTabStopDistance(tabWidth);
+      document()->setDefaultTextOption(opt);
+      document()->markContentsDirty(0, document()->characterCount());
+      viewport()->update();
+      return;
+    }
+
     // Replace: tab -> 4 space
     if (m_replaceTab && e->key() == Qt::Key_Tab &&
         e->modifiers() == Qt::NoModifier) {
