@@ -8,6 +8,8 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
 
+find_package(Qt5 REQUIRED COMPONENTS Widgets)
+
 # cpp
 set(SRC
     src/QCodeEditor.cpp
@@ -54,4 +56,9 @@ target_include_directories(codeeditor PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/../../include
 )
 
-target_link_libraries(codeeditor PUBLIC Qt6::Widgets)
+target_link_libraries(codeeditor PUBLIC Qt5::Widgets)
+
+set_target_properties(codeeditor PROPERTIES
+    AUTOMOC ON
+    AUTORCC ON
+)

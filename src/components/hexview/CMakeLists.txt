@@ -5,16 +5,6 @@ project(hexview)
 option(QHEXVIEW_USE_QT5 "Enable Qt5 build" OFF)
 option(QHEXVIEW_ENABLE_DIALOGS "BuiltIn dialogs" ON)
 
-if(QHEXVIEW_USE_QT5)
-    find_package(Qt5 REQUIRED COMPONENTS Widgets)
-else()
-    find_package(Qt6 COMPONENTS Widgets)
-
-    if(NOT Qt6_FOUND)
-        find_package(Qt5 REQUIRED COMPONENTS Widgets)
-    endif()
-endif()
-
 add_library(${PROJECT_NAME} STATIC)
 
 set_target_properties(${PROJECT_NAME}
@@ -24,10 +14,19 @@ set_target_properties(${PROJECT_NAME}
         AUTOMOC ON
 )
 
-target_link_libraries(${PROJECT_NAME}
-    PUBLIC
-        Qt::Widgets
-)
+if(QHEXVIEW_USE_QT5)
+    find_package(Qt5 REQUIRED COMPONENTS Widgets)
+    target_link_libraries(${PROJECT_NAME} PUBLIC Qt5::Widgets)
+else()
+    find_package(Qt6 COMPONENTS Widgets)
+    
+    if(Qt6_FOUND)
+        target_link_libraries(${PROJECT_NAME} PUBLIC Qt6::Widgets)
+    else()
+        find_package(Qt5 REQUIRED COMPONENTS Widgets)
+        target_link_libraries(${PROJECT_NAME} PUBLIC Qt5::Widgets)
+    endif()
+endif()
 
 target_sources(${PROJECT_NAME}
     PRIVATE 
@@ -39,7 +38,6 @@ target_sources(${PROJECT_NAME}
         include/QHexView/model/commands/hexviewcommand.h
         include/QHexView/model/commands/insertcommand.h
         include/QHexView/model/commands/removecommand.h
-        include/QHexView/model/commands/replacecommand.h
         include/QHexView/model/commands/replacecommand.h
         include/QHexView/model/qhexcursor.h
         include/QHexView/model/qhexdelegate.h

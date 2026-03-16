@@ -9,8 +9,7 @@ set(CMAKE_AUTORCC ON)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Widgets)
-find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Widgets)
+find_package(Qt5 REQUIRED COMPONENTS Widgets)
 
 set(PROJECT_SOURCES
         main.cpp
@@ -19,17 +18,15 @@ set(PROJECT_SOURCES
 add_subdirectory(components/codeeditor)
 add_subdirectory(components/hexview)
 
-if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
-    qt_add_executable(${PROJECT_NAME}
-        MANUAL_FINALIZATION
-        main.cpp
-
+if(ANDROID)
+    add_library(${PROJECT_NAME} SHARED
+        ${PROJECT_SOURCES}
+        
         app/IDEWindow/idewindow.cpp
         app/IDEWindow/idewindow.h
 
         app/WelcomeWindow/welcomeform.cpp
         app/WelcomeWindow/welcomeform.h
-
 
         dialogs/filecreatedialog.cpp
         dialogs/filecreatedialog.h
@@ -50,54 +47,74 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
 
         resources/cremniy_res.qrc
 
-        widgets/codeeditortab.h widgets/codeeditortab.cpp
-        widgets/hexviewtab.h widgets/hexviewtab.cpp
-        widgets/disassemblertab.h widgets/disassemblertab.cpp
+        widgets/codeeditortab.cpp widgets/codeeditortab.h
+        widgets/hexviewtab.cpp widgets/hexviewtab.h
+        widgets/disassemblertab.cpp widgets/disassemblertab.h
 
         include/toolwidget.hpp
         include/tooltab.h
 
-
-        utils/utils.h
         utils/utils.cpp
+        utils/utils.h
         utils/globalwidgetsmanager.h
     )
-    target_include_directories(${PROJECT_NAME} PRIVATE
-        ${CMAKE_CURRENT_SOURCE_DIR}
-        ${CMAKE_CURRENT_SOURCE_DIR}/widgets
-    ${CMAKE_CURRENT_SOURCE_DIR}/include
-${CMAKE_CURRENT_SOURCE_DIR}/utils)
-# Define target properties for Android with Qt 6 as:
-#    set_property(TARGET ${PROJECT_NAME} APPEND PROPERTY QT_ANDROID_PACKAGE_SOURCE_DIR
-#                 ${CMAKE_CURRENT_SOURCE_DIR}/android)
-# For more information, see https://doc.qt.io/qt-6/qt-add-executable.html#target-creation
 else()
-    if(ANDROID)
-        add_library(${PROJECT_NAME} SHARED
-            ${PROJECT_SOURCES}
-        )
-# Define properties for Android with Qt 5 after find_package() calls as:
-#    set(ANDROID_PACKAGE_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/android")
-    else()
-        add_executable(${PROJECT_NAME}
-            ${PROJECT_SOURCES}
-        )
-    endif()
+    add_executable(${PROJECT_NAME}
+        ${PROJECT_SOURCES}
+        
+        app/IDEWindow/idewindow.cpp
+        app/IDEWindow/idewindow.h
+
+        app/WelcomeWindow/welcomeform.cpp
+        app/WelcomeWindow/welcomeform.h
+
+        dialogs/filecreatedialog.cpp
+        dialogs/filecreatedialog.h
+
+        widgets/clickablelineedit.cpp
+        widgets/clickablelineedit.h
+        widgets/filestabwidget.cpp
+        widgets/filestabwidget.h
+        widgets/filetab.cpp
+        widgets/filetab.h
+        widgets/filetreeview.cpp
+        widgets/filetreeview.h
+        widgets/tooltabwidget.cpp
+        widgets/tooltabwidget.h
+
+        utils/iconprovider.cpp
+        utils/iconprovider.h
+
+        resources/cremniy_res.qrc
+
+        widgets/codeeditortab.cpp widgets/codeeditortab.h
+        widgets/hexviewtab.cpp widgets/hexviewtab.h
+        widgets/disassemblertab.cpp widgets/disassemblertab.h
+
+        include/toolwidget.hpp
+        include/tooltab.h
+
+        utils/utils.cpp
+        utils/utils.h
+        utils/globalwidgetsmanager.h
+    )
 endif()
 
-target_link_libraries(${PROJECT_NAME} PRIVATE codeeditor)
-target_link_libraries(${PROJECT_NAME} PRIVATE hexview)
+target_include_directories(${PROJECT_NAME} PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}
+    ${CMAKE_CURRENT_SOURCE_DIR}/widgets
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/utils
+)
 
-target_link_libraries(${PROJECT_NAME} PRIVATE Qt${QT_VERSION_MAJOR}::Widgets)
+target_link_libraries(${PROJECT_NAME} PRIVATE
+    codeeditor
+    hexview
+    Qt5::Widgets
+)
 
-# Qt for iOS sets MACOSX_BUNDLE_GUI_IDENTIFIER automatically since Qt 6.1.
-# If you are developing for iOS or macOS you should consider setting an
-# explicit, fixed bundle identifier manually though.
-if(${QT_VERSION} VERSION_LESS 6.1.0)
-  set(BUNDLE_ID_OPTION MACOSX_BUNDLE_GUI_IDENTIFIER com.example.${PROJECT_NAME})
-endif()
 set_target_properties(${PROJECT_NAME} PROPERTIES
-    ${BUNDLE_ID_OPTION}
+    MACOSX_BUNDLE_GUI_IDENTIFIER com.example.${PROJECT_NAME}
     MACOSX_BUNDLE_BUNDLE_VERSION ${PROJECT_VERSION}
     MACOSX_BUNDLE_SHORT_VERSION_STRING ${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}
     MACOSX_BUNDLE TRUE
@@ -110,8 +127,3 @@ install(TARGETS ${PROJECT_NAME}
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
 )
-
-if(QT_VERSION_MAJOR EQUAL 6)
-    qt_finalize_executable(${PROJECT_NAME})
-endif()
-
