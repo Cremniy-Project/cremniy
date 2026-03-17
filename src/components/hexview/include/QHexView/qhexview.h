@@ -121,6 +121,7 @@ public:
     void clearMetadata();
 
     void setBData(const QByteArray& data) override  {
+        qDebug() << "HexView: setBData()";
         m_ignoreModification = true;
         m_hexdocument->setData(data);
         m_ignoreModification = false;

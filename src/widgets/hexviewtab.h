@@ -33,6 +33,7 @@ public:
     };
 
     void setTabData(QByteArray &data) override {
+        qDebug() << "HexViewTab: setTabData()";
         m_dataHash = qHash(data, 0);
         m_hexViewWidget->setBData(data);
         emit dataEqual();
