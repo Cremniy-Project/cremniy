@@ -37,7 +37,9 @@ HexViewTab::HexViewTab(QWidget *parent, QString path)
 
     // - - Create Pages - -
 
-    // RAW page
+    // crash fix
+    m_hexViewWidget = new QHexView(this);
+    
     auto pageRaw = createPage();
     pageRaw->layout()->addWidget(m_hexViewWidget);
 
