@@ -1,81 +1,93 @@
 <div align="center">
-  <img src="src/resources/icons/icon.png" width="250" alt="logo">
-  <br>
-  <h3>Cremniy</h3>
-  <h6>Среда разработки для низкоуровневого программирования, объединяющая все низкоуровневые инструменты в одном приложении</h6>
+
+<img src="src/resources/icons/icon.png" width="180" alt="Cremniy logo">
+
+# Cremniy
+
+**Среда разработки для низкоуровневого программирования** —  
+бинарный анализ, работа с памятью и системный код в одном приложении.
 
 [![License](https://img.shields.io/github/license/igmunv/cremniy?color=orange&style=flat-square)](LICENSE)
 [![Contributions Welcome](https://img.shields.io/badge/Contributions-Welcome-brightgreen?style=flat-square)](CONTRIBUTING.md)
 [![Community](https://img.shields.io/badge/Community-Telegram-blue?logo=telegram&style=flat-square)](https://t.me/cremniy_com)
+[![C++17](https://img.shields.io/badge/C%2B%2B-17-blue?style=flat-square&logo=cplusplus)](https://en.cppreference.com/w/cpp/17)
+[![Qt 6](https://img.shields.io/badge/Qt-6.x-41CD52?style=flat-square&logo=qt)](https://www.qt.io/)
 
 [English](README.md) • Русский
 
 </div>
 
-<br>
+---
 
-## 📌 О проекте
+## Что такое Cremniy?
 
-**Cremniy** — среда разработки для низкоуровневого программирования.
+**Cremniy** — интегрированная среда для низкоуровневой разработки. Вместо того чтобы держать HEX-редактор в одном окне, дизассемблер в другом, а редактор кода в третьем — всё это объединено в одном последовательном и удобном приложении.
 
-Она объединяет инструменты работы с бинарными файлами, памятью и системным кодом в одном приложении.
+**Ориентирован на:**
 
-### Проект ориентирован на
+- 🛠 Разработчиков системного ПО
+- 🔍 Reverse-инженеров
+- 🔐 Специалистов по информационной безопасности
+- 📡 Разработчиков embedded-систем
 
-- разработчиков системного ПО
-- reverse-инженеров
-- специалистов по информационной безопасности
-- разработчиков embedded-систем
+---
 
-## ✨ Возможности
+## Возможности
 
-### Текущие
+### Доступно сейчас
 
-- Редактор кода
-- HEX-редактор
+| Функция | Описание |
+|---|---|
+| 📝 Редактор кода | Написание и редактирование низкоуровневого кода с поддержкой синтаксиса |
+| 🔢 HEX-редактор | Просмотр и изменение бинарных данных на уровне байт |
+| 🔧 Дизассемблер | Декодирование машинных инструкций в читаемый ассемблер |
 
-### Планируется
+### В планах
 
-- Дизассемблер
-- Отладчик
-- Визуализация памяти
+- 🐛 **Отладчик** — пошаговое выполнение, просмотр регистров и памяти
+- 🧠 **Визуализация памяти** — наглядные карты расположения и выделения памяти
 
-## 📦 Зависимости
+---
+
+## Начало работы
+
+### Зависимости
 
 | Зависимость | Мин. версия |
-| ----------- | ----------- |
-| **CMake**   | 3.16        |
-| **Qt**      | 6.x         |
-| **C++**     | 17          |
-
-### Установка зависимостей
+|---|---|
+| **CMake** | 3.16 |
+| **Qt** | 6.x |
+| **Компилятор C++** | Поддержка C++17 |
 
 <details>
-<summary><b>Windows</b></summary>
+<summary><b>🪟 Windows</b></summary>
 
 1. Установите [Qt 6](https://www.qt.io/download-qt-installer-oss) — при установке выберите компонент **Qt Widgets**.
-2. Установите [CMake](https://cmake.org/download/) (≥ 3.16) или используйте тот, который идёт в комплекте с Qt.
-3. Компилятор с поддержкой C++17: [Visual Studio 2019+](https://visualstudio.microsoft.com/) (MSVC) или [MinGW](https://www.mingw-w64.org/).
+2. Установите [CMake](https://cmake.org/download/) (≥ 3.16) или используйте тот, что идёт в комплекте с Qt.
+3. Установите компилятор с поддержкой C++17:
+   - [Visual Studio 2019+](https://visualstudio.microsoft.com/) (MSVC) — выберите рабочую нагрузку **«Разработка классических приложений на C++»**.
+   - Или [MinGW-w64](https://www.mingw-w64.org/).
 
 > [!TIP]
-> При использовании Visual Studio убедитесь, что установлена рабочая нагрузка «Разработка классических приложений на C++».
+> При использовании Visual Studio убедитесь, что рабочая нагрузка **«Разработка классических приложений на C++»** отмечена при установке.
 
 </details>
 
 <details>
-<summary><b>Linux (Ubuntu / Debian)</b></summary>
+<summary><b>🐧 Linux (Ubuntu / Debian)</b></summary>
 
 ```bash
 sudo apt update
 sudo apt install cmake g++ qt6-base-dev
 ```
 
-Если пакет `qt6-base-dev` недоступен в вашем дистрибутиве, используйте [официальный установщик Qt](https://www.qt.io/download-qt-installer-oss).
+> [!NOTE]
+> Если пакет `qt6-base-dev` недоступен в вашем дистрибутиве, используйте [официальный установщик Qt](https://www.qt.io/download-qt-installer-oss).
 
 </details>
 
 <details>
-<summary><b>macOS</b></summary>
+<summary><b>🍎 macOS</b></summary>
 
 С помощью [Homebrew](https://brew.sh/):
 
@@ -85,29 +97,42 @@ brew install cmake qt@6
 
 </details>
 
-## 🛠️ Сборка
+---
+
+## Сборка
+
+### Клонирование и сборка
 
 ```bash
 git clone https://github.com/igmunv/cremniy.git
 cd cremniy
 
-mkdir build
-cd build
+mkdir build && cd build
 cmake ../src
-
 cmake --build .
 ```
 
-Для сборки в режиме Release:
+### Сборка в режиме Release
 
 ```bash
 cmake ../src -DCMAKE_BUILD_TYPE=Release
 cmake --build . --config Release
 ```
 
-## 🤝 Контрибьюция
+---
 
-Контрибьюции **приветствуются**.
+## Участие в разработке
 
-Все контрибьюторы будут добавлены в [ACKNOWLEDGEMENTS.md](ACKNOWLEDGEMENTS.md)
-и указаны в конце каждого видеоролика на [YouTube-канале](https://www.youtube.com/@igmunv).
+Вклад в проект **приветствуется**.
+
+Будь то исправление ошибок, новая функциональность или улучшение документации — открывайте issue или отправляйте pull request.
+
+Все участники указываются в [ACKNOWLEDGEMENTS.md](ACKNOWLEDGEMENTS.md) и упоминаются в видео на [YouTube-канале](https://www.youtube.com/@igmunv).
+
+Подробнее — в [CONTRIBUTING.md](CONTRIBUTING.md).
+
+---
+
+## Лицензия
+
+Распространяется на условиях, описанных в [LICENSE](LICENSE).
