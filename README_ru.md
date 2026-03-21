@@ -36,24 +36,21 @@
 
 <div align="center">
 
-**Главное меню**
-<img src="screenshots/main_menu.png" alt="Главное меню" width="800">
+### Редактор кода
+<img src="screenshots/code.png" alt="Code Editor" width="800">
+<br>
 
-<br><br>
+### Дизассемблер
+<img src="screenshots/dasm.png" alt="Disassembler" width="800">
+<br>
 
-**Редактор кода**
-<img src="screenshots/code.png" alt="Редактор кода" width="800">
+### HEX-редактор
+<img src="screenshots/hex.png" alt="HEX Editor" width="800">
+<br>
 
-<br><br>
-
-**Дизассемблер**
-<img src="screenshots/desassembler.png" alt="Дизассемблер" width="800">
-
-<br><br>
-
-**HEX-редактор**
-<img src="screenshots/hex.png" alt="HEX-редактор" width="800">
-
+### Другое
+<img src="screenshots/revcalc.png" alt="HEX Editor" width="800">
+<br>
 </div>
 
 ---
