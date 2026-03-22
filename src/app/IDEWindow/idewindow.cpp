@@ -11,6 +11,7 @@
 #include "app/WelcomeWindow/welcomeform.h"
 #include "dialogs/settingsdialog.h"
 #include "dialogs/reversecalculatordialog.h"
+#include <QToolBar>
 
 IDEWindow::IDEWindow(QString ProjectPath, QWidget *parent)
     : QMainWindow(parent)
@@ -22,6 +23,37 @@ IDEWindow::IDEWindow(QString ProjectPath, QWidget *parent)
 
     // Save Project In History
     SaveProjectInCache(ProjectPath);
+
+    // - - Build System - -
+    m_buildManager = new BuildManager(this);
+    m_outputPanel = new OutputPanel(this);
+    addDockWidget(Qt::BottomDockWidgetArea, m_outputPanel);
+
+    connect(m_buildManager, &BuildManager::outputLine,
+        m_outputPanel, &OutputPanel::appendLine);
+    connect(m_buildManager, &BuildManager::processStarted,
+        this, [this](const QString& cmd) {
+            m_outputPanel->appendLine("\n=== " + cmd + " ===");
+        });
+    connect(m_buildManager, &BuildManager::processFinished,
+        this, [this](int code) {
+            m_outputPanel->appendLine(
+                QString("=== Finished (exit code %1) ===").arg(code));
+        });
+    connect(m_buildManager, &BuildManager::errorOccurred,
+        m_outputPanel, &OutputPanel::appendLine);
+
+    // Build Toolbar
+    QToolBar* buildBar = addToolBar("Build");
+    auto* actBuild = buildBar->addAction("▶ Build");
+    auto* actRun = buildBar->addAction("⏵ Run");
+    auto* actClean = buildBar->addAction("🗑 Clean");
+    auto* actStop = buildBar->addAction("■ Stop");
+
+    connect(actBuild, &QAction::triggered, m_buildManager, &BuildManager::runBuild);
+    connect(actRun, &QAction::triggered, m_buildManager, &BuildManager::runRun);
+    connect(actClean, &QAction::triggered, m_buildManager, &BuildManager::runClean);
+    connect(actStop, &QAction::triggered, m_buildManager, &BuildManager::stopProcess);
 
     // - - Main Menu - -
     m_menuBar = menuBar();
@@ -48,6 +80,7 @@ IDEWindow::IDEWindow(QString ProjectPath, QWidget *parent)
     m_tools_reverseCalculator = new QAction("Reverse Calculator", this);
     m_tools_asciiChars = new QAction("ASCII characters", this);
     m_tools_keybScancodes = new QAction("Keyboard Scancodes", this);
+    m_tools_configureBuild = new QAction("Configure Build", this);
 
     // - - Edit Menu - -
     m_edit_settings = new QAction("Settings", this);
@@ -94,9 +127,11 @@ IDEWindow::IDEWindow(QString ProjectPath, QWidget *parent)
 
     // - Tools Menu -
     m_toolsMenu->addAction(m_tools_reverseCalculator);
+    m_toolsMenu->addAction(m_tools_configureBuild);
     m_toolsMenu->addSeparator();
     m_toolsMenu->addAction(m_tools_asciiChars);
     m_toolsMenu->addAction(m_tools_keybScancodes);
+
 
     // - Git Menu -
     m_gitMenu->addAction(m_git_commit);
@@ -166,6 +201,19 @@ IDEWindow::IDEWindow(QString ProjectPath, QWidget *parent)
     connect(m_edit_settings, &QAction::triggered, this, &IDEWindow::on_Open_Settings);
     connect(m_tools_reverseCalculator, &QAction::triggered, this, &IDEWindow::on_Open_ReverseCalculator);
     connect(m_filesTreeView, &QTreeView::doubleClicked, this, &IDEWindow::on_treeView_doubleClicked);
+    connect(m_tools_configureBuild, &QAction::triggered, this, [this]() {
+        BuildConfig current = m_buildManager->config();
+        BuildSetupDialog* dlg = new BuildSetupDialog(current, this);
+        dlg->setWindowTitle("Configure Build");
+        if (dlg->exec() == QDialog::Accepted) {
+            BuildConfig cfg = dlg->result();
+            BuildConfigManager::save(m_projectDir, cfg);
+            m_buildManager->setConfig(cfg);
+            m_outputPanel->appendLine("Build config updated → " + m_projectDir + "/cremniy.json");
+        }
+        delete dlg;
+        });
+    onProjectOpened(ProjectPath);
 }
 
 IDEWindow::~IDEWindow()
@@ -336,3 +384,39 @@ void IDEWindow::on_Tree_ContextMenu(const QPoint &pos)
     menu.exec(m_filesTreeView->viewport()->mapToGlobal(pos));
 }
 
+void IDEWindow::onProjectOpened(const QString& projectDir) {
+    m_projectDir = projectDir;
+    m_buildManager->setProjectDir(projectDir);
+
+    BuildConfig cfg;
+
+    // 1. Уже есть cremniy.json — просто загружаем
+    if (BuildConfigManager::load(projectDir, cfg)) {
+        m_buildManager->setConfig(cfg);
+        m_outputPanel->appendLine("Loaded build config from " + projectDir + "/cremniy.json");
+        return;
+    }
+
+    // 2. Автодетект по CMakeLists.txt / Makefile
+    BuildSetupDialog* dlg;
+    if (BuildConfigManager::autoDetect(projectDir, cfg)) {
+        dlg = new BuildSetupDialog(cfg, this);
+        dlg->setWindowTitle("Build system detected — confirm settings");
+    }
+    else {
+        // 3. Ничего не найдено — пустой диалог
+        dlg = new BuildSetupDialog({}, this);
+        dlg->setWindowTitle("Configure build commands");
+    }
+
+    if (dlg->exec() == QDialog::Accepted) {
+        cfg = dlg->result();
+        BuildConfigManager::save(projectDir, cfg);
+        m_buildManager->setConfig(cfg);
+        m_outputPanel->appendLine("Build config saved → " + projectDir + "/cremniy.json");
+    }
+    else {
+        m_outputPanel->appendLine("⚠ Build config not set. Use Tools → Configure Build to set it up.");
+    }
+    delete dlg;
+}

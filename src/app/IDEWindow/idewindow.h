@@ -8,6 +8,10 @@
 #include <qmenubar.h>
 #include <qsplitter.h>
 #include <qstatusbar.h>
+#include "BuildSystem/BuildConfig.h"
+#include "BuildSystem/BuildManager.h"
+#include "BuildSystem/BuildSetupDialog.h"
+#include "BuildSystem/OutputPanel.h"
 
 class IDEWindow : public QMainWindow
 {
@@ -59,6 +63,13 @@ private:
     */
     void SaveProjectInCache(const QString project_path);
 
+    void onProjectOpened(const QString& projectDir);
+
+    // - - Build System - -
+    BuildManager* m_buildManager = nullptr;
+    OutputPanel* m_outputPanel = nullptr;
+    QString       m_projectDir;
+
     // - - Menu Bars - -
     QMenu* m_fileMenu;
     QMenu* m_editMenu;
@@ -82,6 +93,7 @@ private:
 
     // - Tools -
     QAction* m_tools_reverseCalculator;
+    QAction* m_tools_configureBuild;
 
     // - Tip Tools -
     QAction* m_tools_asciiChars;

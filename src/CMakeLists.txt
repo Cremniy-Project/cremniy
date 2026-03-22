@@ -66,6 +66,15 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
         core/ToolTabFactory.cpp
         core/ToolTabFactory.h
 
+        BuildSystem/BuildConfig.cpp
+        BuildSystem/BuildConfig.h
+        BuildSystem/BuildManager.cpp
+        BuildSystem/BuildManager.h
+        BuildSystem/BuildSetupDialog.cpp
+        BuildSystem/BuildSetupDialog.h
+        BuildSystem/OutputPanel.cpp
+        BuildSystem/OutputPanel.h
+
 
     )
     target_include_directories(${PROJECT_NAME} PRIVATE
