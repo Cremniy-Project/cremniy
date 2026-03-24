@@ -71,7 +71,7 @@ BuildConfig BuildConfigManager::defaultCMakeTemplate(const QString& projectDir)
     cfg.clean = "cmake --build build --target clean";
 
 #ifdef Q_OS_WIN
-    cfg.run = QString(".\\build\\Release\\%1.exe").arg(projectName);
+    cfg.run = QString("\".\\build\\Release\\%1.exe\"").arg(projectName);
 #else
     cfg.run = QString("./build/%1").arg(projectName);
 #endif

@@ -86,7 +86,7 @@ IDEWindow::IDEWindow(QString ProjectPath, QWidget *parent)
     connect(m_buildManager, &BuildManager::processStarted,
             this, [this](const QString& cmd) {
                 m_terminal->appendLine(QString());
-                m_terminal->appendCommand(cmd);
+                m_terminal->appendLine(QString("=== %1 ===").arg(cmd));
             });
     connect(m_buildManager, &BuildManager::processFinished,
             this, [this](int code) {
@@ -316,8 +316,7 @@ void IDEWindow::onProjectOpened(const QString& projectDir)
         dlg = new BuildSetupDialog(cfg, this);
         dlg->setWindowTitle("Build system detected - confirm settings");
     } else {
-        cfg = BuildConfigManager::defaultCMakeTemplate(projectDir);
-        dlg = new BuildSetupDialog(cfg, this);
+        dlg = new BuildSetupDialog({}, this);
         dlg->setWindowTitle("Configure build commands");
     }
 

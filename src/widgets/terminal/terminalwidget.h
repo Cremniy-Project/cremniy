@@ -15,7 +15,6 @@ public:
 
 public slots:
     void appendLine(const QString& line);
-    void appendCommand(const QString& cmd);
 
 private slots:
     void onReadyRead();
