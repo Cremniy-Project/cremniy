@@ -29,22 +29,6 @@ IDEWindow::IDEWindow(QString ProjectPath, QWidget *parent)
     SaveProjectInCache(ProjectPath);
 
     m_buildManager = new BuildManager(this);
-    m_outputPanel = new OutputPanel(this);
-    addDockWidget(Qt::BottomDockWidgetArea, m_outputPanel);
-
-    connect(m_buildManager, &BuildManager::outputLine,
-            m_outputPanel, &OutputPanel::appendLine);
-    connect(m_buildManager, &BuildManager::processStarted,
-            this, [this](const QString& cmd) {
-                m_outputPanel->appendLine("\n=== " + cmd + " ===");
-            });
-    connect(m_buildManager, &BuildManager::processFinished,
-            this, [this](int code) {
-                m_outputPanel->appendLine(
-                    QString("=== Finished (exit code %1) ===").arg(code));
-            });
-    connect(m_buildManager, &BuildManager::errorOccurred,
-            m_outputPanel, &OutputPanel::appendLine);
 
     QToolBar* buildBar = addToolBar("Build");
     buildBar->setObjectName("BuildToolbar");
@@ -96,6 +80,21 @@ IDEWindow::IDEWindow(QString ProjectPath, QWidget *parent)
     m_verticalSplitter->addWidget(m_mainSplitter);
     m_verticalSplitter->addWidget(m_terminal);
     m_verticalSplitter->setSizes({800, 200});
+
+    connect(m_buildManager, &BuildManager::outputLine,
+            m_terminal, &TerminalWidget::appendLine);
+    connect(m_buildManager, &BuildManager::processStarted,
+            this, [this](const QString& cmd) {
+                m_terminal->appendLine(QString());
+                m_terminal->appendCommand(cmd);
+            });
+    connect(m_buildManager, &BuildManager::processFinished,
+            this, [this](int code) {
+                m_terminal->appendLine(
+                    QString("=== Finished (exit code %1) ===").arg(code));
+            });
+    connect(m_buildManager, &BuildManager::errorOccurred,
+            m_terminal, &TerminalWidget::appendLine);
 
     m_mainLayout->addWidget(m_verticalSplitter);
     setCentralWidget(m_mainWidget);
@@ -151,7 +150,7 @@ IDEWindow::IDEWindow(QString ProjectPath, QWidget *parent)
                 BuildConfig cfg = dlg.result();
                 BuildConfigManager::save(m_projectDir, cfg);
                 m_buildManager->setConfig(cfg);
-                m_outputPanel->appendLine("Build config updated -> " + m_projectDir + "/cremniy.json");
+                m_terminal->appendLine("Build config updated -> " + m_projectDir + "/cremniy.json");
             }
         });
     }
@@ -308,7 +307,7 @@ void IDEWindow::onProjectOpened(const QString& projectDir)
     BuildConfig cfg;
     if (BuildConfigManager::load(projectDir, cfg)) {
         m_buildManager->setConfig(cfg);
-        m_outputPanel->appendLine("Loaded build config from " + projectDir + "/cremniy.json");
+        m_terminal->appendLine("Loaded build config from " + projectDir + "/cremniy.json");
         return;
     }
 
@@ -326,9 +325,9 @@ void IDEWindow::onProjectOpened(const QString& projectDir)
         cfg = dlg->result();
         BuildConfigManager::save(projectDir, cfg);
         m_buildManager->setConfig(cfg);
-        m_outputPanel->appendLine("Build config saved -> " + projectDir + "/cremniy.json");
+        m_terminal->appendLine("Build config saved -> " + projectDir + "/cremniy.json");
     } else {
-        m_outputPanel->appendLine("Build config not set. Use Tools -> Configure Build to set it up.");
+        m_terminal->appendLine("Build config not set. Use Tools -> Configure Build to set it up.");
     }
     delete dlg;
 }

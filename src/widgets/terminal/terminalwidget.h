@@ -13,6 +13,10 @@ public:
     explicit TerminalWidget(QWidget *parent = nullptr);
     ~TerminalWidget();
 
+public slots:
+    void appendLine(const QString& line);
+    void appendCommand(const QString& cmd);
+
 private slots:
     void onReadyRead();
     void onProcessError(QProcess::ProcessError error);

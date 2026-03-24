@@ -53,6 +53,19 @@ TerminalWidget::TerminalWidget(QWidget *parent) : QWidget(parent) {
     m_display->installEventFilter(this);
 }
 
+void TerminalWidget::appendLine(const QString& line)
+{
+    m_display->moveCursor(QTextCursor::End);
+    m_display->appendPlainText(line);
+    m_lastPromptPos = m_display->toPlainText().length();
+    m_display->moveCursor(QTextCursor::End);
+}
+
+void TerminalWidget::appendCommand(const QString& cmd)
+{
+    appendLine(QString("$ %1").arg(cmd));
+}
+
 void TerminalWidget::setupShell() {
 #ifdef Q_OS_WIN
     // Используем полный путь на всякий случай

@@ -7,7 +7,6 @@
 #include "BuildSystem/BuildConfig.h"
 #include "BuildSystem/BuildManager.h"
 #include "BuildSystem/BuildSetupDialog.h"
-#include "BuildSystem/OutputPanel.h"
 
 #include <QMainWindow>
 #include <qboxlayout.h>
@@ -43,7 +42,6 @@ private:
     TerminalWidget* m_terminal = nullptr;
 
     BuildManager* m_buildManager = nullptr;
-    OutputPanel* m_outputPanel = nullptr;
     QString m_projectDir;
 
 public slots:
