@@ -2,6 +2,7 @@
 #include <QFile>
 #include <QJsonDocument>
 #include <QJsonObject>
+#include <QRegularExpression>
 
 bool BuildConfigManager::load(const QString& projectDir, BuildConfig& out) {
     QFile file(QDir(projectDir).filePath(CONFIG_FILE));
@@ -37,19 +38,58 @@ bool BuildConfigManager::autoDetect(const QString& projectDir, BuildConfig& out)
     QDir dir(projectDir);
 
     if (dir.exists("CMakeLists.txt")) {
-        QString buildDir = projectDir + "/build";
-        out.build = QString("cmake --build \"%1\"").arg(buildDir);
-        out.run = QString("\"%1/Debug/app.exe\"").arg(buildDir);
-        out.clean = QString("cmake --build \"%1\" --target clean").arg(buildDir);
+        out = defaultCMakeTemplate(projectDir);
         return true;
     }
 
     if (dir.exists("Makefile")) {
         out.build = "make";
-        out.run = QString("\"%1/app\"").arg(projectDir);
+        out.run = "./<target>";
         out.clean = "make clean";
         return true;
     }
 
     return false;
+}
+
+BuildConfig BuildConfigManager::defaultCMakeTemplate(const QString& projectDir)
+{
+    QDir dir(projectDir);
+    QString projectName;
+
+    if (dir.exists("CMakeLists.txt"))
+        projectName = detectCMakeProjectName(dir.filePath("CMakeLists.txt"));
+
+    if (projectName.isEmpty())
+        projectName = QFileInfo(projectDir).fileName().trimmed();
+
+    if (projectName.isEmpty())
+        projectName = "app";
+
+    BuildConfig cfg;
+    cfg.build = "cmake -S . -B build && cmake --build build";
+    cfg.clean = "cmake --build build --target clean";
+
+#ifdef Q_OS_WIN
+    cfg.run = QString(".\\build\\Release\\%1.exe").arg(projectName);
+#else
+    cfg.run = QString("./build/%1").arg(projectName);
+#endif
+
+    return cfg;
+}
+
+QString BuildConfigManager::detectCMakeProjectName(const QString& cmakeListsPath)
+{
+    QFile file(cmakeListsPath);
+    if (!file.open(QIODevice::ReadOnly | QIODevice::Text))
+        return {};
+
+    const QString content = QString::fromUtf8(file.readAll());
+    const QRegularExpression re(R"(project\s*\(\s*([^\s\)]+))", QRegularExpression::CaseInsensitiveOption);
+    const QRegularExpressionMatch match = re.match(content);
+    if (!match.hasMatch())
+        return {};
+
+    return match.captured(1).trimmed();
 }

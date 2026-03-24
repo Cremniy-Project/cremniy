@@ -25,4 +25,8 @@ public:
     // Попытаться автогенерировать конфиг, сканируя папку.
     // Возвращает true и заполняет out, если найдены CMakeLists.txt или Makefile.
     static bool autoDetect(const QString& projectDir, BuildConfig& out);
+    static BuildConfig defaultCMakeTemplate(const QString& projectDir);
+
+private:
+    static QString detectCMakeProjectName(const QString& cmakeListsPath);
 };

@@ -317,7 +317,8 @@ void IDEWindow::onProjectOpened(const QString& projectDir)
         dlg = new BuildSetupDialog(cfg, this);
         dlg->setWindowTitle("Build system detected - confirm settings");
     } else {
-        dlg = new BuildSetupDialog({}, this);
+        cfg = BuildConfigManager::defaultCMakeTemplate(projectDir);
+        dlg = new BuildSetupDialog(cfg, this);
         dlg->setWindowTitle("Configure build commands");
     }
 

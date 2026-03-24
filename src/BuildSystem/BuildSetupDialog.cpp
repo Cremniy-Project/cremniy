@@ -16,14 +16,14 @@ BuildSetupDialog::BuildSetupDialog(const BuildConfig& initial, QWidget* parent)
     m_runEdit   = new QLineEdit(initial.run);
     m_cleanEdit = new QLineEdit(initial.clean);
 
-    m_buildEdit->setPlaceholderText("e.g. cmake --build build");
-    m_runEdit->setPlaceholderText("e.g. ./build/myapp");
-    m_runEdit->setToolTip("For CMake projects use the actual binary name from your CMakeLists.txt");
+    m_buildEdit->setPlaceholderText("e.g. cmake -S . -B build && cmake --build build");
+    m_runEdit->setPlaceholderText("e.g. .\\build\\Release\\myapp.exe");
+    m_runEdit->setToolTip("Commands are executed from the project root directory");
     m_cleanEdit->setPlaceholderText("e.g. cmake --build build --target clean");
 
     form->addRow("Build command:", m_buildEdit);
     form->addRow("Run command:", m_runEdit);
-    auto* runHint = new QLabel("💡 For CMake: replace app.exe with your actual binary name from CMakeLists.txt");
+    auto* runHint = new QLabel("Commands are executed relative to the project directory. For CMake projects the run command uses the target name from CMakeLists.txt when it can be detected.");
     runHint->setStyleSheet("color: gray; font-size: 11px;");
     runHint->setWordWrap(true);
     form->addRow("", runHint);
