@@ -1,5 +1,6 @@
 #include "codeeditortab.h"
 #include "QCodeEditor.hpp"
+#include <QStyle>
 #include <qboxlayout.h>
 #include <qfileinfo.h>
 #include <qlabel.h>
@@ -63,30 +64,6 @@ CodeEditorTab::CodeEditorTab(QWidget *parent)
     // - - Create Search Bar Widget - -
     m_searchWidget = new QWidget(this);
     m_searchWidget->setObjectName("searchWidget");
-
-    m_searchWidget->setStyleSheet(
-        "QWidget#searchWidget {"
-        "   background-color: #2b2b2b;"
-        "   border-top: 1px solid #404040;"
-        "}"
-        "QLineEdit {"
-        "   background-color: #1e1e1e;"
-        "   color: #e0e0e0;"
-        "   border: 1px solid #555555;"
-        "   border-radius: 3px;"
-        "   padding: 3px 6px;"
-        "}"
-        "QLineEdit:focus { border: 1px solid #007acc; }" // Подсветка
-        "QPushButton {"
-        "   background-color: #3c3c3c;"
-        "   color: #e0e0e0;"
-        "   border: 1px solid #555555;"
-        "   border-radius: 3px;"
-        "   padding: 4px 10px;"
-        "}"
-        "QPushButton:hover { background-color: #4a4a4a; }"
-        "QPushButton:pressed { background-color: #2b2b2b; }"
-    );
 
     
     QHBoxLayout* searchLayout = new QHBoxLayout(m_searchWidget);
@@ -249,24 +226,25 @@ void CodeEditorTab::saveTabData() {
 
 void CodeEditorTab::showSearchBar()
 {
+    // Если открыта панель "Binary File", поиск не нужен
     if (!m_overlayWidget->isHidden()) return; 
 
     m_searchWidget->show();
     m_searchLineEdit->setFocus();
-    m_searchLineEdit->selectAll();
+    m_searchLineEdit->selectAll(); // Выделяем текст, если там уже что-то было
 }
 
 void CodeEditorTab::hideSearchBar()
 {
     m_searchWidget->hide();
-    m_codeEditorWidget->setFocus(); 
+    m_codeEditorWidget->setFocus(); // Возвращаем фокус в редактор
 }
 
 void CodeEditorTab::performSearch(bool backward)
 {
     QString query = m_searchLineEdit->text();
     if (query.isEmpty()) {
-        m_searchLineEdit->setStyleSheet("");
+        m_searchLineEdit->setStyleSheet(""); // Сброс стиля
         return;
     }
 
@@ -285,14 +263,11 @@ void CodeEditorTab::performSearch(bool backward)
     }
 
     if (!found) {
-        m_searchLineEdit->setStyleSheet(
-            "background-color: #4a2020;"
-            "color: #e0e0e0;"
-            "border: 1px solid #ff5555;"
-            "border-radius: 3px;"
-            "padding: 3px 6px;"
-        );
+        m_searchLineEdit->setProperty("state", "error");
     } else {
-        m_searchLineEdit->setStyleSheet("");
+        m_searchLineEdit->setProperty("state", "normal");
     }
+    // Обновляем виджет, чтобы Qt применил новые стили из QSS
+    m_searchLineEdit->style()->unpolish(m_searchLineEdit);
+    m_searchLineEdit->style()->polish(m_searchLineEdit);
 }
