@@ -47,7 +47,9 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
         widgets/filetreeview.h
         widgets/tooltabwidget.cpp
         widgets/tooltabwidget.h
-
+        widgets/terminal/terminalwidget.cpp
+        widgets/terminal/terminalwidget.h
+        
         utils/iconprovider.cpp
         utils/iconprovider.h
 
@@ -80,7 +82,8 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
         ${CMAKE_CURRENT_SOURCE_DIR}
         ${CMAKE_CURRENT_SOURCE_DIR}/widgets
         ${CMAKE_CURRENT_SOURCE_DIR}/include
-        ${CMAKE_CURRENT_SOURCE_DIR}/utils)
+        ${CMAKE_CURRENT_SOURCE_DIR}/utils
+        ${CMAKE_CURRENT_SOURCE_DIR}/terminal/ptyqt/core)
 else()
     if(ANDROID)
         add_library(${PROJECT_NAME} SHARED
@@ -102,7 +105,9 @@ foreach(dir ${TOOLTAB_DIRS})
     endif()
 endforeach()
 
-target_link_libraries(${PROJECT_NAME} PRIVATE Qt${QT_VERSION_MAJOR}::Widgets)
+target_link_libraries(${PROJECT_NAME} PRIVATE 
+    Qt${QT_VERSION_MAJOR}::Widgets
+)
 find_program(WINDEPLOYQT_EXECUTABLE windeployqt)
 
 if(WIN32 AND QT_VERSION_MAJOR EQUAL 6 AND WINDEPLOYQT_EXECUTABLE)

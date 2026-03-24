@@ -43,6 +43,10 @@ IDEWindow::IDEWindow(QString ProjectPath, QWidget *parent)
     m_view_wordWrap = new QAction("Word Wrap", this);
     m_view_wordWrap->setCheckable(true);
     m_view_wordWrap->setChecked(true);
+    m_view_toggleTerminal = new QAction("Show Terminal", this);
+    m_view_toggleTerminal->setCheckable(true);
+    m_view_toggleTerminal->setChecked(true);
+    m_view_toggleTerminal->setShortcut(QKeySequence("Ctrl+`")); 
     GlobalWidgetsManager::instance().set_IDEWindow_menuBar_view_wordWrap(m_view_wordWrap);
 
     // - - Tools Menu - -
@@ -66,15 +70,32 @@ IDEWindow::IDEWindow(QString ProjectPath, QWidget *parent)
 
     m_mainWidget = new QWidget(this);
     m_mainLayout = new QHBoxLayout(m_mainWidget);
-    m_mainSplitter = new QSplitter(m_mainWidget);
+    m_mainLayout->setContentsMargins(0,0,0,0);
+
+    m_mainSplitter = new QSplitter(Qt::Horizontal, m_mainWidget);
+
+    m_verticalSplitter = new QSplitter(Qt::Vertical, m_mainWidget);
+
+    m_terminal = new TerminalWidget(this);
 
     QWidget* leftWidget = new QWidget();
     QVBoxLayout* leftLayout = new QVBoxLayout(leftWidget);
     leftLayout->setContentsMargins(0,0,0,0);
-    leftWidget->setLayout(leftLayout);
-
+    
     m_filesTabWidget = new FilesTabWidget();
     m_filesTreeView = new FileTreeView();
+    leftLayout->addWidget(m_filesTreeView);
+
+    m_mainSplitter->addWidget(leftWidget);
+    m_mainSplitter->addWidget(m_filesTabWidget);
+    m_mainSplitter->setSizes({200, 1000});
+
+    m_verticalSplitter->addWidget(m_mainSplitter); // Сверху все наше IDE
+    m_verticalSplitter->addWidget(m_terminal);     // Снизу терминал
+    m_verticalSplitter->setSizes({800, 200});      // пр
+
+    m_mainLayout->addWidget(m_verticalSplitter);
+    setCentralWidget(m_mainWidget);
 
     leftLayout->addWidget(m_filesTreeView);
 
@@ -94,6 +115,7 @@ IDEWindow::IDEWindow(QString ProjectPath, QWidget *parent)
 
     // - View Menu -
     m_viewMenu->addAction(m_view_wordWrap);
+    m_viewMenu->addAction(m_view_toggleTerminal);
 
     // - Tools Menu -
     m_toolsMenu->addAction(m_tools_reverseCalculator);
@@ -113,33 +135,26 @@ IDEWindow::IDEWindow(QString ProjectPath, QWidget *parent)
 
     setCentralWidget(m_mainWidget);
 
-    m_mainLayout->addWidget(m_mainSplitter);
+    m_mainLayout->addWidget(m_verticalSplitter);
 
     m_filesTabWidget->setObjectName("filesTabWidget");
-
-    m_mainSplitter->addWidget(leftWidget);
-    m_mainSplitter->addWidget(m_filesTabWidget);
 
     m_mainSplitter->setSizes({200, 1000});
     m_mainSplitter->setCollapsible(0, false);
     m_mainSplitter->setCollapsible(1, false);
-    m_mainSplitter->setStretchFactor(0, 0);
-    m_mainSplitter->setStretchFactor(1, 1);
+
+    m_verticalSplitter->setSizes({800, 200});
+    m_verticalSplitter->setCollapsible(1, true);
 
     m_filesTreeView->setMinimumWidth(180);
     m_filesTreeView->setTextElideMode(Qt::ElideNone);
     m_filesTreeView->setIndentation(12);
 
     QFileSystemModel *model = new QFileSystemModel(this);
-
     model->setRootPath(ProjectPath);
-
     model->setReadOnly(false);
     m_filesTreeView->setModel(model);
-
-    // ограничиваем отображение только этой директории
     m_filesTreeView->setRootIndex(model->index(ProjectPath));
-    // model->setIconProvider(new IconProvider());
 
     m_filesTreeView->setColumnHidden(1, true);
     m_filesTreeView->setColumnHidden(2, true);
@@ -150,8 +165,6 @@ IDEWindow::IDEWindow(QString ProjectPath, QWidget *parent)
     m_filesTreeView->setContextMenuPolicy(Qt::CustomContextMenu);
 
     m_file_saveFile->setShortcut(QKeySequence::Save);
-
-    m_mainLayout->setContentsMargins(0,0,0,0);
 
     while (m_filesTabWidget->count() > 0) {
         m_filesTabWidget->removeTab(0);
@@ -171,6 +184,7 @@ IDEWindow::IDEWindow(QString ProjectPath, QWidget *parent)
     connect(m_edit_settings, &QAction::triggered, this, &IDEWindow::on_Open_Settings);
     connect(m_tools_reverseCalculator, &QAction::triggered, this, &IDEWindow::on_Open_ReverseCalculator);
     connect(m_filesTreeView, &QTreeView::doubleClicked, this, &IDEWindow::on_treeView_doubleClicked);
+    connect(m_view_toggleTerminal, &QAction::toggled, this, &IDEWindow::on_Toggle_Terminal);
 }
 
 IDEWindow::~IDEWindow()
@@ -180,6 +194,10 @@ void IDEWindow::on_Open_Settings()
 {
     SettingsDialog dlg(this);
     dlg.exec();
+}
+
+void IDEWindow::on_Toggle_Terminal(bool checked) {
+    m_terminal->setVisible(checked);
 }
 
 void IDEWindow::on_Open_ReverseCalculator()

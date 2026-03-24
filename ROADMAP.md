@@ -23,9 +23,9 @@
 - [ ] [Сборка и запуск проекта пользователя](https://github.com/igmunv/cremniy/issues/6)
 - [ ] [Реализовать связанные представления для байтов, инструкций и кода](https://github.com/igmunv/cremniy/issues/47)
 - [ ] [Отображение чисел в разных системах счисления при наведении](https://github.com/igmunv/cremniy/issues/28)
-- [ ] [Терминал](https://github.com/igmunv/cremniy/issues/31)
 - [ ] [Работа с Git](https://github.com/igmunv/cremniy/issues/42)
 - [ ] [Модуль контекстной помощи по инструкциям процессора](https://github.com/igmunv/cremniy/issues/21)
+- [x] [Терминал](https://github.com/igmunv/cremniy/issues/31)
 - [x] [Вкладки форматов в HEX-редакторе](https://github.com/igmunv/cremniy/issues/13)
 - [x] [Добавить поддержку языков](https://github.com/igmunv/cremniy/issues/4)
 
