@@ -4,6 +4,8 @@
 #include <QWidget>
 #include <qboxlayout.h>
 
+class FileDataBuffer;
+
 class FormatPage : public QWidget
 {
     Q_OBJECT
@@ -20,6 +22,7 @@ public:
     virtual void setPageData(QByteArray& data) = 0;
     virtual QByteArray getPageData() const = 0;
     virtual void showFind() {}
+    virtual void setSharedBuffer(FileDataBuffer* buffer) { Q_UNUSED(buffer); }
     
     // Установить выделение (pos - позиция байта, length - длина)
     virtual void setSelection(qint64 pos, qint64 length) = 0;

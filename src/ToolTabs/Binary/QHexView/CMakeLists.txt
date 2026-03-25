@@ -32,6 +32,7 @@ target_link_libraries(${PROJECT_NAME}
 target_sources(${PROJECT_NAME}
     PRIVATE 
         include/QHexView/model/buffer/qdevicebuffer.h
+        include/QHexView/model/buffer/qfiledatabuffer.h
         include/QHexView/model/buffer/qhexbuffer.h
         include/QHexView/model/buffer/qmappedfilebuffer.h
         include/QHexView/model/buffer/qmemorybuffer.h
@@ -56,6 +57,7 @@ target_sources(${PROJECT_NAME}
         src/model/commands/removecommand.cpp
         src/model/commands/replacecommand.cpp
         src/model/buffer/qdevicebuffer.cpp
+        src/model/buffer/qfiledatabuffer.cpp
         src/model/buffer/qhexbuffer.cpp
         src/model/buffer/qmemorybuffer.cpp
         src/model/buffer/qmemoryrefbuffer.cpp
@@ -71,6 +73,7 @@ target_sources(${PROJECT_NAME}
 target_include_directories(${PROJECT_NAME} PUBLIC
     ${PROJECT_SOURCE_DIR}
     ${PROJECT_SOURCE_DIR}/include
+    ${CMAKE_SOURCE_DIR}
     ${CMAKE_SOURCE_DIR}/include
 )
 

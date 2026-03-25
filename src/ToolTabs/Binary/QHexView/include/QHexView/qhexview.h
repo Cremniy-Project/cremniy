@@ -15,6 +15,8 @@
 class HexFindDialog;
 #endif
 
+class FileDataBuffer;
+
 struct QHexCopyFormat {
     QString prefix;
     QString suffix;
@@ -98,6 +100,7 @@ public:
     void setDocument(QHexDocument* doc);
     void setData(const QByteArray& ba);
     void setData(QHexBuffer* buffer);
+    void setSharedBuffer(FileDataBuffer* buffer);
     void setTrackChanges(bool b);
     void setCursorMode(QHexCursor::Mode mode);
     void setByteColor(quint8 b, const QHexCharFormat& cf);

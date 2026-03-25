@@ -32,6 +32,10 @@ public:
     // Полностью заменить рабочую копию данных, не сбрасывая dirty-state
     void replaceData(const QByteArray& data);
 
+    // Вставить или удалить диапазон байтов
+    void insertBytes(qint64 pos, const QByteArray& bytes);
+    void removeBytes(qint64 pos, qint64 length);
+
     // Отменить/повторить последнее изменение
     void undo();
     void redo();
@@ -69,6 +73,9 @@ public:
     void markSaved();
 
     bool saveToFile(const QString& filePath = QString());
+
+    qint64 indexOf(const QByteArray& needle, qint64 from = 0) const;
+    qint64 lastIndexOf(const QByteArray& needle, qint64 from = -1) const;
 
     bool isFileBacked() const;
     bool isMaterialized() const;

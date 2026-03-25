@@ -89,6 +89,37 @@ void FileDataBuffer::replaceData(const QByteArray& data)
     emit dataChanged();
 }
 
+void FileDataBuffer::insertBytes(qint64 pos, const QByteArray& bytes)
+{
+    if (bytes.isEmpty())
+        return;
+
+    QMutexLocker locker(&m_mutex);
+    QByteArray current = materializeLocked();
+    pos = qBound<qint64>(0, pos, current.size());
+    current.insert(static_cast<int>(pos), bytes);
+    applyDataSnapshotLocked(current);
+    locker.unlock();
+    emit dataChanged();
+}
+
+void FileDataBuffer::removeBytes(qint64 pos, qint64 length)
+{
+    if (length <= 0)
+        return;
+
+    QMutexLocker locker(&m_mutex);
+    QByteArray current = materializeLocked();
+    if (pos < 0 || pos >= current.size())
+        return;
+
+    const qint64 boundedLength = qMin<qint64>(length, current.size() - pos);
+    current.remove(static_cast<int>(pos), static_cast<int>(boundedLength));
+    applyDataSnapshotLocked(current);
+    locker.unlock();
+    emit dataChanged();
+}
+
 void FileDataBuffer::undo()
 {
     QMutexLocker locker(&m_mutex);
@@ -316,6 +347,27 @@ bool FileDataBuffer::saveToFile(const QString& filePath)
     }
 
     return true;
+}
+
+qint64 FileDataBuffer::indexOf(const QByteArray& needle, qint64 from) const
+{
+    if (needle.isEmpty())
+        return -1;
+
+    return data().indexOf(needle, static_cast<int>(qMax<qint64>(0, from)));
+}
+
+qint64 FileDataBuffer::lastIndexOf(const QByteArray& needle, qint64 from) const
+{
+    if (needle.isEmpty())
+        return -1;
+
+    const QByteArray current = data();
+    if (current.isEmpty())
+        return -1;
+
+    const int start = from < 0 ? current.size() - 1 : static_cast<int>(qMin<qint64>(from, current.size() - 1));
+    return current.lastIndexOf(needle, start);
 }
 
 bool FileDataBuffer::isFileBacked() const
