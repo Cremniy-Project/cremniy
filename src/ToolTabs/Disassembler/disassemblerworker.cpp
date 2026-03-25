@@ -3,64 +3,9 @@
 #include "disasm/backends/radare2backend.h"
 
 #include <QProcess>
-#include <QProcessEnvironment>
 #include <QRegularExpression>
+#include <QFontDatabase>
 #include <QStandardPaths>
-
-namespace {
-struct ObjdumpSectionHeader {
-    QString name;
-    quint64 size = 0;
-    quint64 vma = 0;
-    quint64 fileOffset = 0;
-    bool valid = false;
-};
-
-static QHash<QString, DisasmSection> parseObjdumpSectionHeaders(const QString &objdumpExe,
-                                                                const QString &filePath,
-                                                                const QProcessEnvironment &env)
-{
-    QHash<QString, DisasmSection> sections;
-
-    QProcess proc;
-    proc.setProcessEnvironment(env);
-    proc.setProcessChannelMode(QProcess::SeparateChannels);
-    proc.start(objdumpExe, {"-h", filePath});
-    if (!proc.waitForStarted(5000))
-        return sections;
-    if (!proc.waitForFinished(10000) || proc.exitCode() != 0)
-        return sections;
-
-    static const QRegularExpression re(
-        R"(^\s*\d+\s+(\S+)\s+([0-9a-fA-F]+)\s+([0-9a-fA-F]+)\s+[0-9a-fA-F]+\s+([0-9a-fA-F]+)\s+)");
-
-    const QStringList lines = QString::fromUtf8(proc.readAllStandardOutput()).split('\n');
-    for (const QString &line : lines) {
-        const auto match = re.match(line);
-        if (!match.hasMatch())
-            continue;
-
-        bool okSize = false;
-        bool okVma = false;
-        bool okOff = false;
-        const quint64 size = match.captured(2).toULongLong(&okSize, 16);
-        const quint64 vma = match.captured(3).toULongLong(&okVma, 16);
-        const quint64 off = match.captured(4).toULongLong(&okOff, 16);
-        if (!okSize || !okVma || !okOff)
-            continue;
-
-        DisasmSection sec;
-        sec.name = match.captured(1);
-        sec.vaddr = vma;
-        sec.fileOffset = off;
-        sec.size = size;
-        sec.hasFileMapping = true;
-        sections.insert(sec.name, sec);
-    }
-
-    return sections;
-}
-} // namespace
 
 DisassemblerWorker::DisassemblerWorker(QObject *parent)
     : QObject{parent}
@@ -208,8 +153,6 @@ void DisassemblerWorker::disassemble(const QString &filePath, const QString &arc
 
     emit logLine("[disasm] objdump started (pid " + QString::number(proc.processId()) + ")");
 
-    const QHash<QString, DisasmSection> sectionHeaders = parseObjdumpSectionHeaders(objdumpExe, filePath, env);
-
     QByteArray output;
     while (!proc.waitForFinished(200)) {
         if (m_cancelled) {
@@ -253,7 +196,7 @@ void DisassemblerWorker::disassemble(const QString &filePath, const QString &arc
     emit logLine("[disasm] --- end raw output ---");
 
     // ── parse ─────────────────────────────────────────────────────────────
-    QVector<DisasmSection> sections = parseSections(output, sectionHeaders);
+    QVector<DisasmSection> sections = parseSections(output);
 
     emit logLine(QString("[disasm] sections parsed: %1").arg(sections.size()));
     for (const auto &s : sections)
@@ -282,83 +225,75 @@ void DisassemblerWorker::disassemble(const QString &filePath, const QString &arc
 //     1004:^I48 83 ec 08          ^Isub    $0x8,%rsp
 //     1008:^I48 8b 05 d9 2f 00 00 ^Imov    0x2fd9(%rip),%rax   # 3fe8 <sym>
 
-QVector<DisasmSection> DisassemblerWorker::parseSections(const QByteArray &raw, const QHash<QString, DisasmSection> &sectionMap)
+// Более надежный парсер
+QVector<DisasmSection> DisassemblerWorker::parseSections(const QByteArray &raw)
 {
     QVector<DisasmSection> sections;
-
-    static const QRegularExpression reSectionHdr(
-        R"(^Disassembly of section\s+(\S+):$)",
-        QRegularExpression::MultilineOption);
-
-    static const QRegularExpression reFuncLabel(
-        R"(^([0-9a-fA-F]+)\s+<([^>]+)>:$)",
-        QRegularExpression::MultilineOption);
-
-    // bytes field: one or more "XX " groups padded with spaces, then TAB before mnemonic
-    static const QRegularExpression reInsn(
-        R"(^\s+([0-9a-fA-F]+):\t((?:[0-9a-fA-F]{2} )+)\s+\t(\S+)(?:[ \t]+([^#\n]*))?)",
-        QRegularExpression::MultilineOption);
-
-    const QString text = QString::fromUtf8(raw);
+    const QString text = QString::fromUtf8(raw).remove('\r');
     const QStringList lines = text.split('\n');
     DisasmSection *curSection = nullptr;
 
-    for (const QString &line : lines) {
-        if (m_cancelled) break;
+    static const QRegularExpression reSectionHdr(R"(^Disassembly of section\s+(\S+):)");
+    static const QRegularExpression reFuncLabel(R"(^([0-9a-fA-F]+)\s+<([^>]+)>:)");
+    static const QRegularExpression reInsnLine(R"(^\s*([0-9a-fA-F]+):\s+(.*))");
 
-        QRegularExpressionMatch m = reSectionHdr.match(line);
-        if (m.hasMatch()) {
-            const QString name = m.captured(1);
-            if (sectionMap.contains(name)) {
-                DisasmSection sec = sectionMap.value(name);
-                sec.instructions.clear();
-                sections.append(sec);
-            } else {
-                sections.append(DisasmSection{ name, {} });
-            }
+    for (const QString &line : lines) {
+        if (line.isEmpty()) continue;
+
+        auto mSec = reSectionHdr.match(line);
+        if (mSec.hasMatch()) {
+            sections.append({ mSec.captured(1), {} });
             curSection = &sections.last();
             continue;
         }
-
         if (!curSection) continue;
 
-        m = reFuncLabel.match(line);
-        if (m.hasMatch()) {
-            DisasmInstruction lbl;
-            lbl.address  = m.captured(1);
-            lbl.mnemonic = "<" + m.captured(2) + ">";
-            curSection->instructions.append(lbl);
+        auto mFunc = reFuncLabel.match(line);
+        if (mFunc.hasMatch()) {
+            curSection->instructions.append({ mFunc.captured(1), "", "<" + mFunc.captured(2) + ">", "" });
             continue;
         }
 
-        m = reInsn.match(line);
-        if (m.hasMatch()) {
+        auto mInsn = reInsnLine.match(line);
+        if (mInsn.hasMatch()) {
+            QString addr = mInsn.captured(1);
+            QString rest = mInsn.captured(2); 
+
+            // Делим строку по табуляциям (objdump на Linux их обожает)
+            QStringList parts = rest.split('\t', Qt::SkipEmptyParts);
+
             DisasmInstruction insn;
-            insn.address  = m.captured(1);
-            insn.bytes    = m.captured(2).trimmed();
-            insn.mnemonic = m.captured(3);
-            insn.operands = m.captured(4).trimmed();
+            insn.address = addr;
 
-            QString bytes = insn.bytes;
-            bytes.remove(' ');
-            bytes.remove('\t');
-            bytes.remove('\n');
-            bytes.remove('\r');
-            insn.size = bytes.trimmed().size() / 2;
-
-            if (curSection->hasFileMapping) {
-                bool okAddr = false;
-                const quint64 addr = insn.address.toULongLong(&okAddr, 16);
-                if (okAddr && addr >= curSection->vaddr) {
-                    const quint64 delta = addr - curSection->vaddr;
-                    if (delta < curSection->size)
-                        insn.fileOffset = static_cast<qint64>(curSection->fileOffset + delta);
+            if (parts.size() >= 1) {
+                insn.bytes = parts[0].trimmed();
+            }
+            
+            if (parts.size() >= 2) {
+                // Вторая часть — это "мнемоника операнды"
+                // Важно: в Intel синтаксисе между ними обычно просто пробелы
+                QString codePart = parts[1].trimmed();
+                int firstSpace = codePart.indexOf(' ');
+                
+                if (firstSpace != -1) {
+                    insn.mnemonic = codePart.left(firstSpace).trimmed();
+                    insn.operands = codePart.mid(firstSpace).trimmed();
+                } else {
+                    insn.mnemonic = codePart;
                 }
             }
+            
+            // Если операнды вдруг оказались в третьей колонке (бывает в редких версиях)
+            if (parts.size() >= 3 && insn.operands.isEmpty()) {
+                insn.operands = parts[2].trimmed();
+            }
+
+            // Убираем системный мусор (адреса переходов в скобках), если они мешают
+            int commentIdx = insn.operands.indexOf('#');
+            if (commentIdx != -1) insn.operands = insn.operands.left(commentIdx).trimmed();
 
             curSection->instructions.append(insn);
         }
     }
-
     return sections;
 }
