@@ -14,6 +14,7 @@ On macOS, use `Cmd` instead of `Ctrl` for standard sequences!
 | Ctrl+Minus | Code Editor: zoom out |
 | Ctrl+Scroll | Code Editor: zoom with mouse wheel |
 | Ctrl+Space | Code Editor: trigger completion |
+| Ctrl+MWheel UP/DOWN | Code Editor: switch between tabs |
 | Tab | Code Editor: insert 4 spaces |
 | Shift+Tab | Code Editor: decrease indent (up to 4 spaces) |
 | Enter | Code Editor: auto-indent (including `{}`) |
