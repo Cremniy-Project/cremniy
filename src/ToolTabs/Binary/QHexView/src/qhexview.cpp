@@ -3,6 +3,7 @@
 #include <QContextMenuEvent>
 #include <QFontDatabase>
 #include <QMenu>
+#include <QHexView/model/buffer/qfiledatabuffer.h>
 #include <QHexView/model/buffer/qmemorybuffer.h>
 #include <QHexView/model/qhexcursor.h>
 #include <QHexView/model/qhexutils.h>
@@ -278,6 +279,19 @@ void QHexView::setDocument(QHexDocument* doc) {
 
 void QHexView::setData(const QByteArray& ba) { m_hexdocument->setData(ba); }
 void QHexView::setData(QHexBuffer* buffer) { m_hexdocument->setData(buffer); }
+void QHexView::setSharedBuffer(FileDataBuffer* buffer) {
+    if (!buffer)
+        return;
+
+    if (auto* sharedBuffer = dynamic_cast<QFileDataBuffer*>(m_hexdocument->m_buffer)) {
+        if (sharedBuffer->sharedBuffer() == buffer)
+            return;
+    }
+
+    m_ignoreModification = true;
+    m_hexdocument->setData(new QFileDataBuffer(buffer, m_hexdocument));
+    m_ignoreModification = false;
+}
 void QHexView::setTrackChanges(bool b) { m_hexdocument->setTrackChanges(b); }
 
 void QHexView::setCursorMode(QHexCursor::Mode mode) {

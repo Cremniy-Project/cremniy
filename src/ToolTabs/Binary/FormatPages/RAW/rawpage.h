@@ -9,6 +9,7 @@ class RAWPage : public FormatPage
 
 private:
     QHexView* m_hexViewWidget;
+    FileDataBuffer* m_sharedBuffer = nullptr;
 
 public:
     explicit RAWPage(QWidget *parent = nullptr);
@@ -18,6 +19,8 @@ public:
     void setPageData(QByteArray& data) override;
     QByteArray getPageData() const override;
     void setSelection(qint64 pos, qint64 length) override;
+    void showFind() override;
+    void setSharedBuffer(FileDataBuffer* buffer) override;
 
 };
 

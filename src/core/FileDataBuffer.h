@@ -8,6 +8,7 @@
 #include <QList>
 #include <QMap>
 #include <QMutex>
+#include <QVector>
 
 class FileDataBuffer : public QObject
 {
@@ -30,6 +31,16 @@ public:
 
     // Полностью заменить рабочую копию данных, не сбрасывая dirty-state
     void replaceData(const QByteArray& data);
+
+    // Вставить или удалить диапазон байтов
+    void insertBytes(qint64 pos, const QByteArray& bytes);
+    void removeBytes(qint64 pos, qint64 length);
+
+    // Отменить/повторить последнее изменение
+    void undo();
+    void redo();
+    bool canUndo() const;
+    bool canRedo() const;
 
     // Изменить один байт
     void setByte(qint64 pos, char byte);
@@ -63,6 +74,9 @@ public:
 
     bool saveToFile(const QString& filePath = QString());
 
+    qint64 indexOf(const QByteArray& needle, qint64 from = 0) const;
+    qint64 lastIndexOf(const QByteArray& needle, qint64 from = -1) const;
+
     bool isFileBacked() const;
     bool isMaterialized() const;
     bool isLargeFile() const;
@@ -95,6 +109,13 @@ private:
     void resetOverlayLocked();
     void closeFileLocked();
     uint computeCurrentHashLocked() const;
+    void applyDataSnapshotLocked(const QByteArray& data);
+    void pushHistoryLocked(const QByteArray& before, const QByteArray& after);
+
+    struct HistoryEntry {
+        QByteArray before;
+        QByteArray after;
+    };
 
     mutable QMutex m_mutex;
     mutable QFile m_file;
@@ -111,6 +132,9 @@ private:
     uint m_originalHash = 0;
     qint64 m_selectionPos = -1;
     qint64 m_selectionLength = 0;
+    QVector<HistoryEntry> m_undoStack;
+    QVector<HistoryEntry> m_redoStack;
+    int m_maxHistoryEntries = 100;
 };
 
 #endif // FILEDATABUFFER_H
