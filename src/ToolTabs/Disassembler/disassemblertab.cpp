@@ -27,9 +27,8 @@
 #include <QGuiApplication>
 #include <QClipboard>
 
-#include "filecontext.h"
-#include "appsettings.h"
-#include "globalwidgetsmanager.h"
+#include "utils/filecontext.h"
+#include "utils/appsettings.h"
 #include "disasm/disasmtexthighlighter.h"
 #include "core/ToolTabFactory.h"
 
