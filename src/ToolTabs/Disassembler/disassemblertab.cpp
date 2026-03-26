@@ -24,10 +24,10 @@
 #include <QStandardPaths>
 #include <QTimer>
 #include <QFontDatabase>
-
 #include <QGuiApplication>
 #include <QClipboard>
 
+#include "utils/FileContext.h"
 #include "utils/appsettings.h"
 #include "utils/globalwidgetsmanager.h"
 #include "disasm/disasmtexthighlighter.h"
@@ -228,9 +228,9 @@ QString DisassemblerTab::formatLine(const LineInfo &li) const
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-DisassemblerTab::DisassemblerTab(FileDataBuffer* buffer, QWidget *parent)
+DisassemblerTab::DisassemblerTab(QWidget *parent)
     : ToolTab{parent}
-    , m_fileContext(buffer)
+    // , m_fileContext(buffer)
 {
     setupUi();
 

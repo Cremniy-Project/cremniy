@@ -120,7 +120,7 @@ private:
     QLineEdit      *m_funcFilterEdit = nullptr;
     QListWidget    *m_funcList       = nullptr;
     QPlainTextEdit *m_disasmView     = nullptr;
-    FileDataBuffer* m_fileContext = nullptr;
+    FileContext *m_fileContext = nullptr;
     DisasmTextHighlighter *m_disasmHighlighter = nullptr;
     QLabel         *m_placeholderLbl = nullptr;
     QWidget        *m_logPanel       = nullptr;
