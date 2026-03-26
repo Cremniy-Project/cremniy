@@ -12,4 +12,6 @@ English • [Русский](README_ru.md)
 
 👤 **[User Guide](user_guide.md)** – how to use the program
 
+⌨️ **[Hotkeys](hotkey.md)** – all combinations of keys in the program
+
 🛠️ **[Developer Guide](developer_guide.md)** – detailed explanation of the architecture, how to make changes, and add features
