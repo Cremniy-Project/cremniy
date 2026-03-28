@@ -1,11 +1,13 @@
 #include "settingsdialog.h"
 
 #include "utils/appsettings.h"
+#include "utils/themeservice.h"
 
 #include <QComboBox>
 #include <QFileDialog>
 #include <QFileInfo>
 #include <QFormLayout>
+#include <QGroupBox>
 #include <QHBoxLayout>
 #include <QLabel>
 #include <QLineEdit>
@@ -49,6 +51,38 @@ SettingsDialog::SettingsDialog(QWidget *parent)
     setSizeGripEnabled(true);
 
     auto *root = new QVBoxLayout(this);
+
+    {
+        auto *appearance = new QGroupBox(tr("Appearance"), this);
+        auto *appForm = new QFormLayout(appearance);
+        appForm->setLabelAlignment(Qt::AlignRight | Qt::AlignVCenter);
+
+        m_themeCombo = new QComboBox(appearance);
+        for (const auto &t : ThemeService::builtinThemes())
+            m_themeCombo->addItem(t.displayName, t.resourcePath);
+        m_themeCombo->addItem(tr("Custom (.qss file)"), QVariant());
+        appForm->addRow(tr("Theme"), m_themeCombo);
+
+        auto *themeRow = new QWidget(appearance);
+        auto *themeRowLayout = new QHBoxLayout(themeRow);
+        themeRowLayout->setContentsMargins(0, 0, 0, 0);
+        m_customThemePath = new QLineEdit(themeRow);
+        m_customThemePath->setPlaceholderText(tr("Path to a .qss file (Import…)"));
+        m_themeBrowseBtn = new QPushButton(tr("Import…"), themeRow);
+        m_themeBrowseBtn->setFixedWidth(90);
+        themeRowLayout->addWidget(m_customThemePath, 1);
+        themeRowLayout->addWidget(m_themeBrowseBtn);
+        appForm->addRow(tr("Custom theme"), themeRow);
+
+        root->addWidget(appearance);
+
+        connect(m_themeCombo, QOverload<int>::of(&QComboBox::currentIndexChanged),
+                this, &SettingsDialog::previewTheme);
+        connect(m_themeCombo, QOverload<int>::of(&QComboBox::currentIndexChanged),
+                this, &SettingsDialog::updateThemeRowEnabled);
+        connect(m_customThemePath, &QLineEdit::textChanged, this, &SettingsDialog::previewTheme);
+        connect(m_themeBrowseBtn, &QPushButton::clicked, this, &SettingsDialog::onBrowseTheme);
+    }
 
     auto *form = new QFormLayout();
     form->setLabelAlignment(Qt::AlignRight | Qt::AlignVCenter);
@@ -161,7 +195,7 @@ SettingsDialog::SettingsDialog(QWidget *parent)
     connect(m_exportBtn, &QPushButton::clicked, this, &SettingsDialog::onExportIni);
     connect(m_importBtn, &QPushButton::clicked, this, &SettingsDialog::onImportIni);
     connect(m_okBtn,     &QPushButton::clicked, this, &SettingsDialog::onAccept);
-    connect(m_cancelBtn, &QPushButton::clicked, this, &QDialog::reject);
+    connect(m_cancelBtn, &QPushButton::clicked, this, &SettingsDialog::reject);
     connect(m_backendCombo, QOverload<int>::of(&QComboBox::currentIndexChanged),
             this, &SettingsDialog::onBackendChanged);
     connect(m_insnLimit, QOverload<int>::of(&QSpinBox::valueChanged), this, &SettingsDialog::updateDependencyStatus);
@@ -172,6 +206,52 @@ SettingsDialog::SettingsDialog(QWidget *parent)
     loadFromSettings();
     updateUiEnabledState();
     updateDependencyStatus();
+    m_themePathAtOpen = AppSettings::themeQssPath();
+}
+
+void SettingsDialog::reject()
+{
+    ThemeService::applyStylesheet(m_themePathAtOpen, nullptr);
+    QDialog::reject();
+}
+
+void SettingsDialog::onBrowseTheme()
+{
+    const QString file = QFileDialog::getOpenFileName(
+        this,
+        tr("Import Qt stylesheet"),
+        m_customThemePath->text().trimmed().isEmpty()
+            ? QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation)
+            : QFileInfo(m_customThemePath->text().trimmed()).absolutePath(),
+        tr("Qt Stylesheets (*.qss)"));
+    if (file.isEmpty())
+        return;
+    m_customThemePath->setText(file);
+    m_themeCombo->setCurrentIndex(ThemeService::builtinThemes().size());
+    previewTheme();
+}
+
+void SettingsDialog::updateThemeRowEnabled()
+{
+    const int customIdx = ThemeService::builtinThemes().size();
+    const bool custom = (m_themeCombo->currentIndex() == customIdx);
+    m_customThemePath->setEnabled(custom);
+    m_themeBrowseBtn->setEnabled(custom);
+}
+
+void SettingsDialog::previewTheme()
+{
+    const auto builtins = ThemeService::builtinThemes();
+    const int idx = m_themeCombo->currentIndex();
+    QString path;
+    if (idx >= 0 && idx < builtins.size())
+        path = builtins.at(idx).resourcePath;
+    else {
+        path = m_customThemePath->text().trimmed();
+        if (path.isEmpty())
+            return;
+    }
+    ThemeService::applyStylesheet(path, nullptr);
 }
 
 void SettingsDialog::onExportIni()
@@ -215,6 +295,24 @@ void SettingsDialog::onImportIni()
 
 void SettingsDialog::loadFromSettings()
 {
+    {
+        const QString cur = AppSettings::themeQssPath();
+        const auto builtins = ThemeService::builtinThemes();
+        bool matched = false;
+        for (int i = 0; i < builtins.size(); ++i) {
+            if (builtins.at(i).resourcePath == cur) {
+                m_themeCombo->setCurrentIndex(i);
+                matched = true;
+                break;
+            }
+        }
+        if (!matched) {
+            m_themeCombo->setCurrentIndex(builtins.size());
+            m_customThemePath->setText(cur);
+        }
+        updateThemeRowEnabled();
+    }
+
     const auto backend = AppSettings::disasmBackend();
     const int want = static_cast<int>(backend);
     int idx = m_backendCombo->findData(want);
@@ -322,6 +420,29 @@ void SettingsDialog::onTestTools()
 
 void SettingsDialog::onAccept()
 {
+    {
+        const auto builtins = ThemeService::builtinThemes();
+        const int idx = m_themeCombo->currentIndex();
+        QString themePath;
+        if (idx >= 0 && idx < builtins.size())
+            themePath = builtins.at(idx).resourcePath;
+        else {
+            themePath = m_customThemePath->text().trimmed();
+            if (themePath.isEmpty()) {
+                QMessageBox::warning(this, tr("Theme"), tr("Choose a .qss file or select a built-in theme."));
+                return;
+            }
+            const QFileInfo fi(themePath);
+            if (!fi.isFile() || fi.suffix().compare(QLatin1String("qss"), Qt::CaseInsensitive) != 0) {
+                QMessageBox::warning(this, tr("Theme"), tr("Invalid file. Expected an existing .qss file."));
+                return;
+            }
+        }
+        AppSettings::setThemeQssPath(themePath);
+        ThemeService::applyStylesheet(themePath, nullptr);
+        m_themePathAtOpen = themePath;
+    }
+
     const int backendInt = m_backendCombo->currentData().toInt();
     const auto backend = (backendInt == static_cast<int>(AppSettings::DisasmBackend::Radare2))
         ? AppSettings::DisasmBackend::Radare2
