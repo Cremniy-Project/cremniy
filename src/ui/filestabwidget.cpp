@@ -1,12 +1,16 @@
 #include "filestabwidget.h"
+#include <QApplication>
+#include <QCoreApplication>
 #include <QMouseEvent>
 #include <QTabBar>
+#include <QWheelEvent>
 #include <qboxlayout.h>
 #include <qfileinfo.h>
 
 FilesTabWidget::FilesTabWidget(QWidget *parent) {
   connect(this, &QTabWidget::currentChanged, this, &FilesTabWidget::tabSelect);
   tabBar()->installEventFilter(this);
+  QCoreApplication::instance()->installEventFilter(this);
 }
 
 void FilesTabWidget::tabSelect(int index) {
@@ -63,7 +67,40 @@ void FilesTabWidget::saveFileSlot() {
 }
 
 bool FilesTabWidget::eventFilter(QObject *obj, QEvent *event) {
-  // todo: переписать закрытие без лишнего eventFilter!!!
+  // Shift + Mouse Wheel: переключения вкладок
+  if (event->type() == QEvent::Wheel) {
+    QWheelEvent *we = static_cast<QWheelEvent *>(event);
+    if (we->modifiers() == Qt::ShiftModifier) {
+      /*
+      только если курсор в области filestab виджетов
+      warn: у нас ща не горизонтального скролла в коде, но если появится, то
+      надо будет что-то придумать с этим
+      */
+      QWidget *src = qobject_cast<QWidget *>(obj);
+      if (!src || !isAncestorOf(src))
+        return QTabWidget::eventFilter(obj, event);
+
+      int delta = we->angleDelta().y();
+      if (delta == 0)
+        delta = we->angleDelta().x();
+
+      if (delta != 0 && count() > 1) {
+        int newIdx = currentIndex() + (delta > 0 ? 1 : -1);
+        if (newIdx < 0)
+          newIdx = count() - 1;
+        else if (newIdx >= count())
+          newIdx = 0;
+        setCurrentIndex(newIdx);
+        return true;
+      }
+    }
+  }
+
+  /*
+  Middle Mouse Button: закрытие вкладки
+  todo: переписать закрытие без лишнего eventFilter, если возможно сделать это
+  адекватно
+  */
   if (obj == tabBar() && event->type() == QEvent::MouseButtonRelease) {
     QMouseEvent *me = static_cast<QMouseEvent *>(event);
     if (me->button() == Qt::MiddleButton) {

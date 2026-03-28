@@ -8,11 +8,13 @@
 #include <qstackedlayout.h>
 #include "filemanager.h"
 #include "utils.h"
+
 #include <QLineEdit>
 #include <QShortcut>
 #include <QKeySequence>
 #include <QTextCursor>
 #include <QHBoxLayout>
+
 
 #include "core/ToolTabFactory.h"
 

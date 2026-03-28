@@ -13,7 +13,6 @@ class CodeEditorTab : public ToolTab
     Q_OBJECT
 
 private:
-
     /**
      * @brief Виджет редактора кода
     */
