@@ -20,7 +20,7 @@ int main(int argc, char *argv[])
         a.setStyleSheet(styleSheet);
         file.close();
     } else {
-        QFile defaultFile(":/styles/style.qss");
+        QFile defaultFile(":/styles/dark.qss");
         if (defaultFile.open(QFile::ReadOnly)) {
             a.setStyleSheet(QString::fromUtf8(defaultFile.readAll()));
         }
