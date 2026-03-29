@@ -21,7 +21,8 @@ public slots:
   void saveFileSlot();
   
 private:
-    void switchTab(int page);
+  void switchTab(int page);
+  void closeTab(int index);
 };
 
 #endif // FILESTABWIDGET_H

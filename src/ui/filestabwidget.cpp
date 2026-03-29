@@ -67,69 +67,74 @@ void FilesTabWidget::saveFileSlot() {
 }
 
 bool FilesTabWidget::eventFilter(QObject *obj, QEvent *event) {
-  // Переключение вкладок
+  switch (event->type()) {
 
-  // ALT + Mouse Wheel UP/DOWN
-  if (event->type() == QEvent::Wheel) {
-    QWheelEvent *we = static_cast<QWheelEvent *>(event);
-    if (we->modifiers() == Qt::AltModifier) {
+  // Переключение вкладок через ALT + Mouse Wheel UP/DOWN
+  case QEvent::Wheel: {
+    auto *we = static_cast<QWheelEvent *>(event);
+    if (we->modifiers() == Qt::AltModifier && count() > 1) {
       int delta = we->angleDelta().y();
-      if (delta == 0)
+      if (delta == 0) {
         delta = we->angleDelta().x();
+      }
 
-      if (delta != 0 && count() > 1) {
+      if (delta != 0) {
         switchTab(delta > 0 ? 1 : -1);
         return true;
       }
     }
-  }
-  
-  // ALT + Arrow LEFT/RIGHT
-  if (event->type() == QEvent::KeyPress) {
-    QKeyEvent *key = static_cast<QKeyEvent *>(event);
-    if (key->modifiers() == Qt::AltModifier) {
-      if (key->key() == Qt::Key_Left) {
-        switchTab(-1);
-        return true;
-      }
-      if (key->key() == Qt::Key_Right) {
-        switchTab(1);
-        return true;
-      }
-    }
+    break;
   }
 
   /*
-  Middle Mouse Button: закрытие вкладки
-  todo: переписать закрытие без лишнего eventFilter, если возможно сделать это
-  адекватно
+  ALT + Arrows: для переключения между вкладками
+  CTRL + W: для закрытия вкладки
   */
-  if (obj == tabBar() && event->type() == QEvent::MouseButtonRelease) {
-    QMouseEvent *me = static_cast<QMouseEvent *>(event);
-    if (me->button() == Qt::MiddleButton) {
-      int index = tabBar()->tabAt(me->pos());
-      if (index != -1) {
-        QWidget *w = widget(index);
-        removeTab(index);
-        w->deleteLater();
+  case QEvent::KeyPress: {
+    auto *keyEvent = static_cast<QKeyEvent *>(event);
+    if (keyEvent->modifiers() == Qt::AltModifier) {
+      if (keyEvent->key() == Qt::Key_Left) {
+        switchTab(-1);
+        return true;
+      } else if (keyEvent->key() == Qt::Key_Right) {
+        switchTab(1);
+        return true;
+      }
+    } else if (keyEvent->modifiers() == Qt::ControlModifier &&
+               keyEvent->key() == Qt::Key_W) {
+      closeTab(currentIndex());
+      return true;
+    }
+    break;
+  }
+
+  // Mouse Middle Button: для закрытия вкладки
+  case QEvent::MouseButtonRelease: {
+    if (obj == tabBar()) {
+      auto *me = static_cast<QMouseEvent *>(event);
+      if (me->button() == Qt::MiddleButton) {
+        closeTab(tabBar()->tabAt(me->pos()));
         return true;
       }
     }
+    break;
   }
-  
-if (event->type() == QEvent::KeyPress) {
-    QKeyEvent *key = static_cast<QKeyEvent *>(event);
-    if (key->modifiers() == Qt::ControlModifier && key->key() == Qt::Key_W) {
-        int index = currentIndex();
-        if (index != -1) {
-            QWidget *w = widget(index);
-            removeTab(index);
-            w->deleteLater();
-        }
-        return true;
-    }
-}
+
+  default:
+    break;
+  }
+
   return QTabWidget::eventFilter(obj, event);
+}
+
+void FilesTabWidget::closeTab(int index) {
+  if (index >= 0 && index < count()) {
+    QWidget *w = widget(index);
+    removeTab(index);
+    if (w) {
+      w->deleteLater();
+    }
+  }
 }
 
 void FilesTabWidget::switchTab(int page) {
