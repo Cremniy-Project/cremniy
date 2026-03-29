@@ -17,6 +17,9 @@ class SettingsDialog : public QDialog
 public:
     explicit SettingsDialog(QWidget *parent = nullptr);
 
+public slots:
+    void reject() override;
+
 private slots:
     void onBrowseObjdump();
     void onBrowseRadare2();
@@ -25,11 +28,19 @@ private slots:
     void onImportIni();
     void onAccept();
     void onBackendChanged(int index);
+    void onBrowseTheme();
+    void previewTheme();
+    void updateThemeRowEnabled();
 
 private:
     void loadFromSettings();
     void updateUiEnabledState();
     void updateDependencyStatus();
+
+    QComboBox   *m_themeCombo = nullptr;
+    QLineEdit   *m_customThemePath = nullptr;
+    QPushButton *m_themeBrowseBtn = nullptr;
+    QString      m_themePathAtOpen;
 
     QComboBox   *m_backendCombo = nullptr;
     QLineEdit   *m_objdumpPath  = nullptr;

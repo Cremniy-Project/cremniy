@@ -42,9 +42,13 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
 
         widgets/terminal/terminalwidget.cpp
         widgets/terminal/terminalwidget.h
+        widgets/terminal/QAnsiTextEdit/src/QAnsiTextEdit.cpp
+        widgets/terminal/QAnsiTextEdit/src/QAnsiTextEdit.h
 
         utils/iconprovider.cpp
         utils/iconprovider.h
+        utils/themeservice.h
+        utils/themeservice.cpp
 
         resources/cremniy_res.qrc
 
