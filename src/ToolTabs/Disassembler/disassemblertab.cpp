@@ -352,6 +352,7 @@ void DisassemblerTab::onDataChanged()
 // ─────────────────────────────────────────────────────────────────────────────
 void DisassemblerTab::setupUi()
 {
+    
     auto *mainLayout = new QVBoxLayout(this);
     mainLayout->setContentsMargins(0, 0, 0, 0);
     mainLayout->setSpacing(0);
@@ -459,16 +460,11 @@ void DisassemblerTab::setupUi()
         }
     });
     connect(m_funcList, &QListWidget::itemActivated, this, [this](QListWidgetItem *it) {
-        if (!it) return;
-        const QString addr = it->data(Qt::UserRole).toString();
-        if (!addr.isEmpty())
-            jumpToAddress(addr);
+        if (it) jumpToAddress(it->data(Qt::UserRole).toString());
     });
+
     connect(m_funcList, &QListWidget::itemClicked, this, [this](QListWidgetItem *it) {
-        if (!it) return;
-        const QString addr = it->data(Qt::UserRole).toString();
-        if (!addr.isEmpty())
-            jumpToAddress(addr);
+        if (it) jumpToAddress(it->data(Qt::UserRole).toString());
     });
 
     m_disasmView = new QPlainTextEdit(m_topSplitter);
@@ -1021,7 +1017,7 @@ void DisassemblerTab::setFunctionsList(const QVector<DisasmFunction> &funcs)
 
     for (const auto &f : sorted) {
         auto *it = new QListWidgetItem(QString("%1  %2").arg(f.address, f.name), m_funcList);
-        it->setData(Qt::UserRole, f.address);
+        it->setData(Qt::UserRole, f.address); 
     }
 }
 
@@ -1045,32 +1041,53 @@ void DisassemblerTab::rebuildFunctionsFromLines()
 
 void DisassemblerTab::jumpToAddress(const QString &addr)
 {
-    if (!m_disasmView) return;
-    // Search within current visible listing by "ADDR:" prefix.
-    QString needle = addr.trimmed().toLower();
-    if (needle.startsWith("0x")) needle = needle.mid(2);
-    if (needle.isEmpty()) return;
+    if (!m_disasmView || addr.isEmpty()) return;
 
-    QTextCursor cur(m_disasmView->document());
-    cur.movePosition(QTextCursor::Start);
-    while (true) {
-        const QTextBlock b = cur.block();
-        if (!b.isValid()) break;
-        const QString line = b.text().toLower();
-        // line begins with right-justified addr, format: "    0x401000: ..."
-        int colon = line.indexOf(':');
-        if (colon > 0) {
-            QString left = line.left(colon);
-            left.remove(' ');
-            if (left.startsWith("0x")) left = left.mid(2);
-            if (left.startsWith(needle)) {
-                QTextCursor c(b);
-                m_disasmView->setTextCursor(c);
-                m_disasmView->centerCursor();
-                return;
+    // 1. Конвертируем целевой адрес в число для надежного сравнения
+    quint64 targetAddr = 0;
+    if (!parseHexU64(addr, &targetAddr)) return;
+
+    int targetVisualLine = -1;
+
+    // 2. Ищем в m_visibleLineMap индекс строки, который соответствует этому адресу.
+    // Это гораздо быстрее и точнее, чем парсить текст из QPlainTextEdit.
+    for (int visLine = 0; visLine < m_visibleLineMap.size(); ++visLine) {
+        int lineIdx = m_visibleLineMap[visLine];
+        if (lineIdx < 0) continue; // Пропускаем строки-заголовки (где индекс -1)
+
+        const LineInfo &li = m_lines[lineIdx];
+        quint64 currentAddr = 0;
+        if (parseHexU64(li.address, &currentAddr)) {
+            if (currentAddr == targetAddr) {
+                targetVisualLine = visLine;
+                break;
             }
         }
-        cur.movePosition(QTextCursor::NextBlock);
+    }
+
+    // 3. Если строка найдена в текущем представлении
+    if (targetVisualLine != -1) {
+        QTextDocument *doc = m_disasmView->document();
+        QTextBlock block = doc->findBlockByNumber(targetVisualLine);
+        
+        if (block.isValid()) {
+            QTextCursor cursor(block);
+            m_disasmView->setTextCursor(cursor);
+            m_disasmView->centerCursor();
+
+            // Визуальная подсветка прыжка
+            QList<QTextEdit::ExtraSelection> extra;
+            QTextEdit::ExtraSelection sel;
+            sel.format.setBackground(m_disasmView->palette().highlight());
+            sel.format.setForeground(m_disasmView->palette().highlightedText());
+            sel.format.setProperty(QTextFormat::FullWidthSelection, true);
+            sel.cursor = cursor;
+            extra.append(sel);
+            m_disasmView->setExtraSelections(extra);
+        }
+    } else {
+        // Если адрес не найден (например, он в другой секции, которая сейчас скрыта фильтром)
+        m_statusLabel->setText(tr("Address %1 is not visible in current view").arg(addr));
     }
 }
 
@@ -1160,91 +1177,93 @@ void DisassemblerTab::onSearchTextChanged(const QString &)
 
 void DisassemblerTab::applyFilter()
 {
-    if (m_sections.isEmpty()) return;
+    if (m_sections.isEmpty() || !m_disasmView) return;
 
     const QString query = m_searchEdit->text().trimmed().toLower();
-
-    if (!m_disasmView) return;
+    const bool haveQuery = !query.isEmpty();
 
     m_visibleLineMap.clear();
     QStringList out;
     out.reserve(m_lines.size());
 
-    const bool haveQuery = !query.isEmpty();
-    int shown = 0;
-
-    // Function separators (IDA-like): show a header when we hit a function start.
+    // Хеш-карта имен функций для быстрой вставки заголовков
     QHash<QString, QString> funcByAddr;
-    funcByAddr.reserve(m_functions.size());
-    for (const auto &f : m_functions)
+    for (const auto &f : m_functions) {
         funcByAddr.insert(f.address.trimmed().toLower(), f.name);
+    }
+
+    int shownLines = 0;
 
     for (int i = 0; i < m_lines.size(); ++i) {
         const LineInfo &li = m_lines[i];
-        const bool inSection = (m_currentSectionIndex < 0) || (li.sectionIndex == m_currentSectionIndex);
+
+        // Фильтрация по секции и поисковому запросу
+        bool inSection = (m_currentSectionIndex < 0) || (li.sectionIndex == m_currentSectionIndex);
         if (!inSection) continue;
+
         if (haveQuery) {
-            const bool match = li.addrL.contains(query)
-                            || li.bytesL.contains(query)
-                            || li.mnemL.contains(query)
-                            || li.opsL.contains(query);
+            bool match = li.addrL.contains(query) || li.bytesL.contains(query) || 
+                         li.mnemL.contains(query) || li.opsL.contains(query);
             if (!match) continue;
         }
 
-        const QString a = li.address.trimmed().toLower();
-        if (funcByAddr.contains(a)) {
-            out << QString("; ─── %1 (%2) ───").arg(funcByAddr.value(a), li.address.trimmed());
-            m_visibleLineMap << -1; // header line
+        // Вставка заголовка функции (IDA-style)
+        QString normAddr = li.address.trimmed().toLower();
+        if (funcByAddr.contains(normAddr)) {
+            out << QString("; --- FUNCTION: %1 (%2) ---").arg(funcByAddr.value(normAddr), li.address.trimmed());
+            m_visibleLineMap << -1; 
         }
 
-        // Coalesce consecutive "invalid" into a single data line (radare2 often marks undecodable bytes one-by-one).
-        if (li.mnemonic.trimmed().compare("invalid", Qt::CaseInsensitive) == 0 && !li.bytes.trimmed().isEmpty()) {
+        // Оптимизация: Склейка идущих подряд "invalid" инструкций в один блок
+        if (li.mnemonic.trimmed().compare("invalid", Qt::CaseInsensitive) == 0 && !li.bytes.isEmpty()) {
             quint64 curAddr = 0;
             if (parseHexU64(li.address, &curAddr)) {
-                QString joined = normalizeBytes(li.bytes);
-                quint64 nextExpected = curAddr + static_cast<quint64>(joined.size() / 2);
+                QString joinedBytes = normalizeBytes(li.bytes);
+                quint64 nextExpected = curAddr + (joinedBytes.size() / 2);
 
                 int j = i + 1;
-                for (; j < m_lines.size(); ++j) {
-                    const LineInfo &n = m_lines[j];
-                    if (n.sectionIndex != li.sectionIndex) break;
-                    if (n.mnemonic.trimmed().compare("invalid", Qt::CaseInsensitive) != 0) break;
-                    const QString nb = normalizeBytes(n.bytes);
-                    if (nb.isEmpty()) break;
-                    quint64 na = 0;
-                    if (!parseHexU64(n.address, &na)) break;
-                    if (na != nextExpected) break;
-                    joined += nb;
-                    nextExpected += static_cast<quint64>(nb.size() / 2);
+                while (j < m_lines.size()) {
+                    const LineInfo &next = m_lines[j];
+                    if (next.sectionIndex != li.sectionIndex || 
+                        next.mnemonic.trimmed().compare("invalid", Qt::CaseInsensitive) != 0) break;
+
+                    quint64 nextAddr = 0;
+                    if (!parseHexU64(next.address, &nextAddr) || nextAddr != nextExpected) break;
+
+                    QString nb = normalizeBytes(next.bytes);
+                    joinedBytes += nb;
+                    nextExpected += (nb.size() / 2);
+                    j++;
                 }
 
-                LineInfo tmp = li;
-                tmp.bytes = joined;
-                tmp.bytesL = joined.toLower();
-                tmp.operands.clear();
-                tmp.opsL.clear();
-
-                out << formatLine(tmp);
-                m_visibleLineMap << i; // map to first underlying line (hex-patch here still works)
-                ++shown;
-                i = j - 1;
+                LineInfo coalesced = li;
+                coalesced.bytes = joinedBytes;
+                coalesced.operands.clear();
+                
+                out << formatLine(coalesced);
+                m_visibleLineMap << i;
+                shownLines++;
+                i = j - 1; // Пропускаем обработанные строки
                 continue;
             }
         }
 
+        // Обычная строка
         out << formatLine(li);
         m_visibleLineMap << i;
-        ++shown;
+        shownLines++;
     }
 
+    // Обновляем UI
     m_disasmView->setPlainText(out.join('\n'));
 
-    if (shown == 0) {
+    if (shownLines == 0 && haveQuery) {
         showPlaceholder(tr("No results for \"%1\"").arg(m_searchEdit->text()));
     } else {
         m_stack->setCurrentWidget(m_topSplitter);
     }
-    m_statusLabel->setText(tr("%1 line(s) shown").arg(shown));
+    
+    m_statusLabel->setText(tr("%1 lines shown").arg(shownLines));
 }
 
 #include "moc_disassemblertab.cpp"
