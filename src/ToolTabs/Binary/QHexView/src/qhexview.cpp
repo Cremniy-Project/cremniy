@@ -9,6 +9,8 @@
 #include <QHexView/model/qhexutils.h>
 #include <QHexView/qhexview.h>
 #include <QMouseEvent>
+#include <QInputDialog>
+#include <QMessageBox>
 #include <QPainter>
 #include <QPalette>
 #include <QScrollBar>
@@ -365,6 +367,49 @@ void QHexView::showReplace() {
     if(!m_hexdlgreplace)
         m_hexdlgreplace = new HexFindDialog(HexFindDialog::Type::Replace, this);
     m_hexdlgreplace->show();
+}
+
+void QHexView::showGoto() {
+    if(!m_hexdocument)
+        return;
+
+    bool ok = false;
+    const QString text = QInputDialog::getText(
+        this, tr("Go to"),
+        tr("Address or offset (0x... for hex address, decimal for offset):"),
+        QLineEdit::Normal, QString(), &ok);
+    if(!ok || text.trimmed().isEmpty())
+        return;
+
+    const QString value = text.trimmed();
+    bool parseOk = false;
+    quint64 target = 0;
+    bool absoluteAddress = false;
+
+    if(value.startsWith(QStringLiteral("0x"), Qt::CaseInsensitive)) {
+        target = value.mid(2).toULongLong(&parseOk, 16);
+        absoluteAddress = true;
+    } else {
+        target = value.toULongLong(&parseOk, 10);
+    }
+
+    if(!parseOk) {
+        QMessageBox::warning(this, tr("Go to"),
+                             tr("Invalid address or offset: %1").arg(value));
+        return;
+    }
+
+    const quint64 targetOffset = absoluteAddress ? target - this->baseAddress() : target;
+    if((absoluteAddress && target < this->baseAddress()) ||
+       targetOffset >= static_cast<quint64>(m_hexdocument->length())) {
+        QMessageBox::warning(this, tr("Go to"),
+                             tr("Target is outside the current document."));
+        return;
+    }
+
+    m_hexcursor->move(static_cast<qint64>(targetOffset));
+    ensureVisible();
+    viewport()->update();
 }
 #endif
 
@@ -1600,6 +1645,8 @@ bool QHexView::keyPressAction(QKeyEvent* e) {
             this->copy(m_currentarea != QHexArea::Ascii);
         else if(!m_readonly && e->matches(QKeySequence::Paste))
             this->paste(m_currentarea != QHexArea::Ascii);
+        else if(e->modifiers() == Qt::ControlModifier && e->key() == Qt::Key_G)
+            this->showGoto();
         else
             return false;
 

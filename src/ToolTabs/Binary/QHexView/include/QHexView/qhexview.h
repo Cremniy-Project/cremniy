@@ -137,6 +137,7 @@ public Q_SLOTS:
 #if defined(QHEXVIEW_ENABLE_DIALOGS)
     void showFind();
     void showReplace();
+    void showGoto();
 #endif
     void invertByteOrder();
     void undo();
