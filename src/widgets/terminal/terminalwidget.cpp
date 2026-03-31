@@ -26,6 +26,7 @@ TerminalWidget::TerminalWidget(QWidget *parent) : QWidget(parent) {
     m_display->setObjectName("terminalDisplay");
     m_display->setStyleSheet("font-family: 'Consolas', 'DejaVu Sans Mono', monospace; font-size: 10pt;");
     layout->addWidget(m_display);
+    setFocusProxy(m_display);
 
     m_process = new QProcess(this);
     m_process->setProcessChannelMode(QProcess::MergedChannels);
@@ -207,8 +208,8 @@ void TerminalWidget::onProcessError(QProcess::ProcessError error) {
 TerminalWidget::~TerminalWidget() {
     saveHistory();
     
-    if (m_process->state() == QProcess::Running) {
-        m_process->terminate();
-        m_process->waitForFinished(500);
+    if (m_process->state() != QProcess::NotRunning) {
+        m_process->kill();
+        m_process->setParent(nullptr);
     }
 }

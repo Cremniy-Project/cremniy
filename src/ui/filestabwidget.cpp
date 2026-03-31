@@ -115,3 +115,93 @@ bool FilesTabWidget::eventFilter(QObject *obj, QEvent *event) {
   }
   return QTabWidget::eventFilter(obj, event);
 }
+
+bool FilesTabWidget::eventFilter(QObject *obj, QEvent *event) {
+    switch (event->type()) {
+
+    // ALT + Mouse Wheel UP/DOWN: для переключения между вкладками
+    case QEvent::Wheel: {
+        auto *we = static_cast<QWheelEvent *>(event);
+        if (we->modifiers() == Qt::AltModifier && count() > 1) {
+            int delta = we->angleDelta().y();
+            if (delta == 0) {
+                delta = we->angleDelta().x();
+            }
+            if (delta != 0) {
+                switchTab(delta > 0 ? 1 : -1);
+                return true;
+            }
+        }
+        break;
+    }
+
+    case QEvent::KeyPress: {
+        auto *keyEvent = static_cast<QKeyEvent *>(event);
+        // ALT + Arrows: для переключения между вкладками
+        if (keyEvent->modifiers() == Qt::AltModifier) {
+            if (keyEvent->key() == Qt::Key_Left) {
+                switchTab(-1);
+                return true;
+            } else if (keyEvent->key() == Qt::Key_Right) {
+                switchTab(1);
+                return true;
+            }
+            // CTRL + W: для закрытия вкладки
+        } else if (keyEvent->modifiers() == Qt::ControlModifier && keyEvent->key() == Qt::Key_W) {
+            closeTab(currentIndex());
+            return true;
+        }
+        break;
+    }
+
+    // Mouse Middle Button: для закрытия вкладки
+    case QEvent::MouseButtonRelease: {
+        if (obj == tabBar()) {
+            auto *me = static_cast<QMouseEvent *>(event);
+            if (me->button() == Qt::MiddleButton) {
+                closeTab(tabBar()->tabAt(me->pos()));
+                return true;
+            }
+        }
+        break;
+    }
+
+    default:
+        break;
+    }
+    return QTabWidget::eventFilter(obj, event);
+}
+
+void FilesTabWidget::closeTab(int index) {
+    if (index < 0 || index >= count()) {
+        return;
+    }
+
+    FileTab *tab = qobject_cast<FileTab *>(widget(index));
+    if (tab && tab->isFileUnsaved()) {
+        const auto replay = QMessageBox::question(this, "Save File", "Do you want to save this file?",
+                                                  QMessageBox::Yes | QMessageBox::No | QMessageBox::Cancel);
+        switch (replay) {
+        case QMessageBox::Yes:
+            tab->saveFile();
+            break;
+        case QMessageBox::No:
+            break;
+        case QMessageBox::Cancel:
+            return;
+        }
+    }
+
+    removeTab(index);
+    if (tab)
+        tab->deleteLater();
+}
+
+void FilesTabWidget::switchTab(int page) {
+    int newIdx = currentIndex() + page;
+    if (newIdx < 0)
+        newIdx = count() - 1;
+    else if (newIdx >= count())
+        newIdx = 0;
+    setCurrentIndex(newIdx);
+}
