@@ -19,6 +19,10 @@ ViewMenu::ViewMenu() : BaseMenu("View") {
     m_tabReplace->setCheckable(true);
     m_tabReplace->setChecked(false);
 
+    m_perfMonitor = new QAction("Performance Monitor", this);
+    m_perfMonitor->setCheckable(true);
+    m_perfMonitor->setChecked(true);
+
     auto* tabWidthMenu = new QMenu("Tab Width", this);
     QActionGroup* tabWidthGroup = new QActionGroup(this);
     tabWidthGroup->setExclusive(true);
@@ -38,6 +42,7 @@ ViewMenu::ViewMenu() : BaseMenu("View") {
     this->addAction(m_wordWrap);
     this->addAction(m_tabReplace);
     this->addMenu(tabWidthMenu);
+    this->addAction(m_perfMonitor);
     this->addSeparator();
     this->addAction(m_terminal);
 }
@@ -48,5 +53,6 @@ void ViewMenu::setupConnections(IDEWindow* ideWind){
     connect(m_tabWidth2, &QAction::triggered, ideWind, [ideWind]() { ideWind->on_SetTabWidth(2); });
     connect(m_tabWidth4, &QAction::triggered, ideWind, [ideWind]() { ideWind->on_SetTabWidth(4); });
     connect(m_tabWidth8, &QAction::triggered, ideWind, [ideWind]() { ideWind->on_SetTabWidth(8); });
+    connect(m_perfMonitor, &QAction::triggered, ideWind, &IDEWindow::on_Toggle_PerfMonitor);
     connect(m_terminal, &QAction::triggered, ideWind, &IDEWindow::on_Toggle_Terminal);
 }

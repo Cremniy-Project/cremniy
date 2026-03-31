@@ -11,6 +11,7 @@
 #include <QMouseEvent>
 #include <QInputDialog>
 #include <QMessageBox>
+#include <QElapsedTimer>
 #include <QPainter>
 #include <QPalette>
 #include <QScrollBar>
@@ -23,6 +24,8 @@
 #if defined(QHEXVIEW_ENABLE_DIALOGS)
 #include <QHexView/dialogs/hexfinddialog.h>
 #endif
+
+QHexView::PerfStats QHexView::s_perfStats;
 
 #if defined(QHEXVIEW_DEBUG)
 #include <QDebug>
@@ -1763,6 +1766,9 @@ void QHexView::paintEvent(QPaintEvent*) {
     if(!m_hexdocument)
         return;
 
+    QElapsedTimer timer;
+    timer.start();
+
     QPainter painter(this->viewport());
     painter.translate(-this->horizontalScrollBar()->value(), 0);
     painter.setFont(this->font());
@@ -1771,6 +1777,14 @@ void QHexView::paintEvent(QPaintEvent*) {
         m_hexdelegate->paint(&painter, this);
     else
         this->paint(&painter);
+
+    const double elapsedMs = timer.nsecsElapsed() / 1000000.0;
+    s_perfStats.lastPaintMs = elapsedMs;
+    s_perfStats.sampleCount = qMin(s_perfStats.sampleCount + 1, 120);
+    if(s_perfStats.sampleCount <= 1)
+        s_perfStats.avgPaintMs = elapsedMs;
+    else
+        s_perfStats.avgPaintMs = ((s_perfStats.avgPaintMs * (s_perfStats.sampleCount - 1)) + elapsedMs) / s_perfStats.sampleCount;
 
     // DEBUG: Render hex-columns area
     // int i = 0;
@@ -1785,6 +1799,8 @@ void QHexView::paintEvent(QPaintEvent*) {
     //     painter.fillRect(r, c);
     // }
 }
+
+QHexView::PerfStats QHexView::perfStats() { return s_perfStats; }
 
 void QHexView::resizeEvent(QResizeEvent* e) {
     this->checkState();

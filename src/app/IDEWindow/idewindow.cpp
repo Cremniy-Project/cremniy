@@ -7,10 +7,17 @@
 #include <qjsonobject.h>
 #include <QStandardPaths>
 #include <QApplication>
+#include <QTimer>
 #include "app/WelcomeWindow/welcomeform.h"
 #include "dialogs/settingsdialog.h"
 #include "ui/MenuBar/menubarbuilder.h"
 #include "widgets/CustomCodeEditor.h"
+#include "QHexView/qhexview.h"
+
+#ifdef Q_OS_WIN
+#include <windows.h>
+#include <psapi.h>
+#endif
 
 IDEWindow::IDEWindow(QString ProjectPath, QWidget *parent)
     : QMainWindow(parent)
@@ -28,6 +35,7 @@ IDEWindow::IDEWindow(QString ProjectPath, QWidget *parent)
 
     // - - Widgets - -
     m_statusBar = statusBar();
+    setupPerfMonitor();
 
     m_mainWidget = new QWidget(this);
     m_mainLayout = new QHBoxLayout(m_mainWidget);
@@ -145,6 +153,47 @@ void IDEWindow::on_SetTabWidth(int width)
         if (editor)
             editor->setTabDisplaySize(width);
     }
+}
+
+void IDEWindow::on_Toggle_PerfMonitor(bool checked)
+{
+    if (m_perfLabel)
+        m_perfLabel->setVisible(checked);
+    if (m_perfTimer)
+        checked ? m_perfTimer->start() : m_perfTimer->stop();
+}
+
+void IDEWindow::setupPerfMonitor()
+{
+    m_perfLabel = new QLabel(this);
+    m_perfLabel->setMinimumWidth(420);
+    m_statusBar->addPermanentWidget(m_perfLabel, 0);
+
+    m_perfTimer = new QTimer(this);
+    m_perfTimer->setInterval(1000);
+    connect(m_perfTimer, &QTimer::timeout, this, &IDEWindow::updatePerfMonitor);
+    m_perfTimer->start();
+    updatePerfMonitor();
+}
+
+void IDEWindow::updatePerfMonitor()
+{
+    double ramMb = 0.0;
+#ifdef Q_OS_WIN
+    PROCESS_MEMORY_COUNTERS_EX pmc;
+    if (GetProcessMemoryInfo(GetCurrentProcess(), reinterpret_cast<PROCESS_MEMORY_COUNTERS*>(&pmc), sizeof(pmc)))
+        ramMb = static_cast<double>(pmc.WorkingSetSize) / (1024.0 * 1024.0);
+#endif
+
+    const auto codeStats = CustomCodeEditor::perfStats();
+    const auto hexStats = QHexView::perfStats();
+
+    m_perfLabel->setText(QStringLiteral("RAM %1 MB | Code %2/%3 ms | Hex %4/%5 ms")
+                             .arg(QString::number(ramMb, 'f', 1),
+                                  QString::number(codeStats.lastPaintMs, 'f', 2),
+                                  QString::number(codeStats.avgPaintMs, 'f', 2),
+                                  QString::number(hexStats.lastPaintMs, 'f', 2),
+                                  QString::number(hexStats.avgPaintMs, 'f', 2)));
 }
 
 void IDEWindow::SaveProjectInCache(const QString project_path){

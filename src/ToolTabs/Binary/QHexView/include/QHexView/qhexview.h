@@ -52,7 +52,14 @@ class QHexView: public QAbstractScrollArea, public ToolWidget {
     };
 
 public:
+    struct PerfStats {
+        double lastPaintMs = 0.0;
+        double avgPaintMs = 0.0;
+        int sampleCount = 0;
+    };
+
     explicit QHexView(QWidget* parent = nullptr);
+    static PerfStats perfStats();
 
     bool m_ignoreModification = false;
 
@@ -239,6 +246,7 @@ private:
 #if defined(QHEXVIEW_ENABLE_DIALOGS)
     HexFindDialog *m_hexdlgfind{nullptr}, *m_hexdlgreplace{nullptr};
 #endif
+    static PerfStats s_perfStats;
 
     friend class QHexDelegate;
     friend class QHexCursor;

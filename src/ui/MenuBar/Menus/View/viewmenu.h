@@ -12,6 +12,7 @@ private:
     QAction* m_tabWidth2;
     QAction* m_tabWidth4;
     QAction* m_tabWidth8;
+    QAction* m_perfMonitor;
     QAction* m_terminal;
 public:
     ViewMenu();
