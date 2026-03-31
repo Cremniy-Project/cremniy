@@ -23,11 +23,14 @@
 #include <QFileDialog>
 #include <QStandardPaths>
 #include <QTimer>
+#include <QToolTip>
+#include <QHelpEvent>
 
 #include <QGuiApplication>
 #include <QClipboard>
 
 #include "utils/appsettings.h"
+#include "utils/instructionhelpservice.h"
 #include "disasm/disasmtexthighlighter.h"
 #include "core/ToolTabFactory.h"
 
@@ -509,7 +512,15 @@ void DisassemblerTab::setupUi()
         "  color: #60a5fa; }"
         "QPlainTextEdit::selection { background: #2d2d50; color: #ffffff; }");
     m_disasmView->setContextMenuPolicy(Qt::CustomContextMenu);
+    m_disasmView->viewport()->setMouseTracking(true);
+    m_disasmView->viewport()->installEventFilter(this);
     m_disasmHighlighter = new DisasmTextHighlighter(m_disasmView->document());
+    connect(m_disasmView, &QPlainTextEdit::cursorPositionChanged, this, [this]() {
+        if (!m_disasmView || !m_disasmView->hasFocus())
+            return;
+        const QPoint p = m_disasmView->cursorRect().bottomRight();
+        showInstructionHelpAt(p, true);
+    });
 
     // Обработчик выделения в дизассемблере - уведомляем буфер
     connect(m_disasmView, &QPlainTextEdit::selectionChanged, this, [this]() {
@@ -833,6 +844,41 @@ void DisassemblerTab::setupUi()
         if (m_running) cancelDisassembly();
         startDisassembly();
     });
+}
+
+bool DisassemblerTab::eventFilter(QObject *watched, QEvent *event)
+{
+    if (m_disasmView && watched == m_disasmView->viewport() && event) {
+        if (event->type() == QEvent::ToolTip) {
+            auto *helpEvent = static_cast<QHelpEvent *>(event);
+            showInstructionHelpAt(helpEvent->pos(), false);
+            return true;
+        }
+    }
+    return ToolTab::eventFilter(watched, event);
+}
+
+void DisassemblerTab::showInstructionHelpAt(const QPoint &pos, bool forceByCursor)
+{
+    if (!m_disasmView)
+        return;
+
+    QTextCursor c = forceByCursor ? m_disasmView->textCursor() : m_disasmView->cursorForPosition(pos);
+    c.select(QTextCursor::WordUnderCursor);
+    const QString token = c.selectedText().trimmed();
+    const QString line = c.block().text();
+
+    QString tip = InstructionHelpService::instance().tooltipForToken(token, line);
+    if (tip.isEmpty())
+        tip = InstructionHelpService::instance().tooltipForLine(line);
+
+    if (tip.isEmpty()) {
+        QToolTip::hideText();
+        return;
+    }
+
+    const QPoint globalPos = m_disasmView->viewport()->mapToGlobal(forceByCursor ? m_disasmView->cursorRect().bottomRight() : pos);
+    QToolTip::showText(globalPos, tip, m_disasmView->viewport());
 }
 
 void DisassemblerTab::updateBackendUiHint()

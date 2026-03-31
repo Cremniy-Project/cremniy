@@ -5,11 +5,15 @@
 #include "utils.h"
 
 #include <QBoxLayout>
+#include <QCheckBox>
 #include <QFileInfo>
+#include <QHBoxLayout>
 #include <QInputDialog>
+#include <QKeySequence>
 #include <QLabel>
 #include <QLineEdit>
 #include <QPushButton>
+#include <QShortcut>
 #include <QStackedLayout>
 #include <QVBoxLayout>
 

@@ -84,6 +84,9 @@ private slots:
     void onGlobalActionTriggered(const QString &actionName);
 
 private:
+    bool eventFilter(QObject *watched, QEvent *event) override;
+    void showInstructionHelpAt(const QPoint &pos, bool forceByCursor = false);
+
     void setupUi();
     void setRunningState(bool running);
     void showPlaceholder(const QString &msg);

@@ -1,5 +1,6 @@
 #include "viewmenu.h"
 #include "ui/MenuBar/menufactory.h"
+#include <QKeySequence>
 
 #include <QActionGroup>
 
@@ -33,8 +34,12 @@ ViewMenu::ViewMenu() : BaseMenu("View") {
 
     m_terminal = new QAction("Show terminal", this);
     m_terminal->setCheckable(true);
-    m_terminal->setChecked(true);
-
+    m_terminal->setChecked(false);
+    m_terminal->setShortcuts({
+        QKeySequence("Ctrl+`"),
+        QKeySequence("Ctrl+ё"),
+    });
+    
     this->addAction(m_wordWrap);
     this->addAction(m_tabReplace);
     this->addMenu(tabWidthMenu);

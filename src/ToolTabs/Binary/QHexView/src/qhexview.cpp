@@ -158,6 +158,7 @@ QHexView::QHexView(QWidget* parent)
     connect(m_hexcursor, &QHexCursor::positionChanged, this, [this]() {
         m_writing = false;
         this->ensureVisible();
+        qDebug() << "positionChanged";
         Q_EMIT positionChanged();
     });
 
@@ -1390,29 +1391,43 @@ QHexCharFormat QHexView::drawFormat(PaintContext* ctx, quint8 b,
         }
     }
 
+    // Check: user select bytes?
     if(this->hexCursor()->isSelected(line, column)) {
         qint64 offset = this->hexCursor()->positionToOffset(pos);
         qint64 selend = this->hexCursor()->selectionEndOffset();
 
-        cf.background =
-            this->palette().brush(QPalette::Normal, QPalette::Highlight);
-        cf.foreground =
-            this->palette().color(QPalette::Normal, QPalette::HighlightedText);
+        if (this->hexCursor()->getSelectFromFormatPage()) {
+            cf.background = QBrush(QColor(255, 175, 50));
+        }
+        else {
+            cf.background = this->palette().brush(QPalette::Normal, QPalette::Highlight);
+        }
+
+        cf.foreground = this->palette().color(QPalette::Normal, QPalette::HighlightedText);
+
         if(offset < selend && column < this->getLastColumn(line))
             selcf = cf;
     }
 
     if(this->hexCursor()->position() == pos) {
-        QBrush cursorbg = this->palette().brush(
-            this->hasFocus() ? QPalette::Normal : QPalette::Disabled,
-            QPalette::WindowText);
-        QColor cursorfg = this->palette().color(
-            this->hasFocus() ? QPalette::Normal : QPalette::Disabled,
-            QPalette::Base);
-        QBrush discursorbg =
-            this->palette().brush(QPalette::Disabled, QPalette::WindowText);
-        QColor discursorfg =
-            this->palette().color(QPalette::Disabled, QPalette::Base);
+
+        QBrush cursorbg;
+        QColor cursorfg;
+        QBrush discursorbg;
+        QColor discursorfg;
+
+        if (this->hexCursor()->getSelectFromFormatPage()) {
+            cursorbg = QBrush(QColor(255, 175, 50));
+            cursorfg = this->palette().color(QPalette::Normal, QPalette::HighlightedText);
+            discursorbg = QBrush(QColor(255, 175, 50));
+            discursorfg = this->palette().color(QPalette::Normal, QPalette::HighlightedText);
+        }
+        else{
+            cursorbg = this->palette().brush(QPalette::Normal, QPalette::Highlight);
+            cursorfg = this->palette().color(QPalette::Normal, QPalette::HighlightedText);
+            discursorbg = this->palette().brush(QPalette::Normal, QPalette::Highlight);
+            discursorfg = this->palette().color(QPalette::Normal, QPalette::HighlightedText);
+        }
 
         switch(m_hexcursor->mode()) {
             case QHexCursor::Mode::Insert:
@@ -1820,6 +1835,7 @@ void QHexView::focusOutEvent(QFocusEvent* e) {
 }
 
 void QHexView::mousePressEvent(QMouseEvent* e) {
+    hexCursor()->setSelectFromFormatPage(false);
     QAbstractScrollArea::mousePressEvent(e);
     if(!m_hexdocument || e->button() != Qt::LeftButton)
         return;
@@ -1848,6 +1864,8 @@ void QHexView::mousePressEvent(QMouseEvent* e) {
 }
 
 void QHexView::mouseMoveEvent(QMouseEvent* e) {
+    hexCursor()->setSelectFromFormatPage(false);
+    qDebug() << "QHexView::mouseMoveEvent(QMouseEvent* e)";
     QAbstractScrollArea::mouseMoveEvent(e);
     if(!this->hexCursor())
         return;
@@ -1866,6 +1884,7 @@ void QHexView::mouseMoveEvent(QMouseEvent* e) {
     }
 
     if(e->buttons() == Qt::LeftButton) {
+        qDebug() << "QHexView::mouseMoveEvent(QMouseEvent* e): LeftButton";
         auto pos = this->positionFromPoint(e->pos());
         if(!pos.isValid())
             return;
