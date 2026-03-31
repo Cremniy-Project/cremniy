@@ -11,6 +11,8 @@ public:
 
   void tabSelect(int index);
   void openFile(QString fullPath, QString fileName);
+  void closeTab(int index);
+  void switchTab(int page);
 
 protected:
   bool eventFilter(QObject *obj, QEvent *event) override;

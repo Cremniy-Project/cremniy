@@ -244,5 +244,5 @@ void WelcomeForm::SetProjectHistoryList(){
 
     QStringListModel *model = new QStringListModel(this);
     model->setStringList(history);
-    history_project_list->setModel(model);
+    RecentProjectsList->setModel(model);
 }
