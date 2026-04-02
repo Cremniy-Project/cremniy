@@ -230,7 +230,10 @@ bool FileDataBuffer::saveToFile(const QString& filePath)
         if (sourceWasOpen) {
             QMutexLocker locker(&m_mutex);
             m_file.setFileName(m_filePath);
-            m_file.open(QIODevice::ReadOnly);
+            if (!m_file.open(QIODevice::ReadOnly)) {
+                qWarning() << "Failed to open file: " << m_file.errorString();
+                return false;
+            }
         }
         return false;
     }
@@ -239,7 +242,10 @@ bool FileDataBuffer::saveToFile(const QString& filePath)
         if (sourceWasOpen) {
             QMutexLocker locker(&m_mutex);
             m_file.setFileName(m_filePath);
-            m_file.open(QIODevice::ReadOnly);
+            if (!m_file.open(QIODevice::ReadOnly)) {
+                qWarning() << "Failed to open file: " << m_file.errorString();
+                return false;
+            }
         }
         return false;
     }
@@ -248,7 +254,10 @@ bool FileDataBuffer::saveToFile(const QString& filePath)
         if (sourceWasOpen) {
             QMutexLocker locker(&m_mutex);
             m_file.setFileName(m_filePath);
-            m_file.open(QIODevice::ReadOnly);
+            if (!m_file.open(QIODevice::ReadOnly)) {
+                qWarning() << "Failed to open file: " << m_file.errorString();
+                return false;
+            }
         }
         return false;
     }
