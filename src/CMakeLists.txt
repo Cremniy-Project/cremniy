@@ -17,71 +17,18 @@ set(PROJECT_SOURCES
 )
 
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
+    file(GLOB_RECURSE PROJECT_SOURCES CONFIGURE_DEPENDS
+        "*.cpp"
+        "*.h"
+        "resources/*.qrc"
+    )
+
+    # Exclude build directory
+    list(FILTER PROJECT_SOURCES EXCLUDE REGEX ".*cmake-build*")
+
     qt_add_executable(${PROJECT_NAME}
         MANUAL_FINALIZATION
-        main.cpp
-
-        app/IDEWindow/idewindow.cpp
-        app/IDEWindow/idewindow.h
-        app/WelcomeWindow/welcomeform.cpp
-        app/WelcomeWindow/welcomeform.h
-
-        dialogs/filecreatedialog.cpp
-        dialogs/filecreatedialog.h
-        dialogs/settingsdialog.cpp
-        dialogs/settingsdialog.h
-        dialogs/reversecalculatordialog.cpp
-        dialogs/reversecalculatordialog.h
-
-        widgets/clickablelineedit.cpp
-        widgets/clickablelineedit.h
-        widgets/filetab.cpp
-        widgets/filetab.h
-        widgets/filetreeview.cpp
-        widgets/filetreeview.h
-
-        widgets/terminal/terminalwidget.cpp
-        widgets/terminal/terminalwidget.h
-
-        utils/iconprovider.cpp
-        utils/iconprovider.h
-
-        resources/cremniy_res.qrc
-
-        utils/utils.h
-        utils/utils.cpp
-        utils/appsettings.h
-        utils/appsettings.cpp
-        utils/instructionhelpservice.h
-        utils/instructionhelpservice.cpp
-        utils/filecontext.h
-        utils/filemanager.h
-        utils/filemanager.cpp
-        utils/projectshistorymanager.cpp
-        utils/projectshistorymanager.h
-
-        core/ToolTab.h
-        core/ToolTabFactory.cpp
-        core/ToolTabFactory.h
-        core/FileDataBuffer.h
-        core/FileDataBuffer.cpp
-
-        ui/MenuBar/menubarbuilder.h ui/MenuBar/menubarbuilder.cpp
-        ui/MenuBar/menufactory.h ui/MenuBar/menufactory.cpp
-        ui/MenuBar/Menus/File/filemenu.h ui/MenuBar/Menus/File/filemenu.cpp
-        ui/MenuBar/basemenu.h
-        ui/MenuBar/Menus/Edit/editmenu.h ui/MenuBar/Menus/Edit/editmenu.cpp
-        ui/MenuBar/Menus/View/viewmenu.h ui/MenuBar/Menus/View/viewmenu.cpp
-        ui/MenuBar/Menus/Build/buildmenu.h ui/MenuBar/Menus/Build/buildmenu.cpp
-        ui/MenuBar/Menus/Tools/toolsmenu.h ui/MenuBar/Menus/Tools/toolsmenu.cpp
-        ui/MenuBar/Menus/References/referencesmenu.h ui/MenuBar/Menus/References/referencesmenu.cpp
-        ui/filestabwidget.cpp
-        ui/filestabwidget.h
-        ui/toolstabwidget.cpp
-        ui/toolstabwidget.h
-
-
-
+        ${PROJECT_SOURCES}
     )
     target_include_directories(${PROJECT_NAME} PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}
