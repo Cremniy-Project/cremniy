@@ -9,7 +9,7 @@ static bool registered = [](){
     return true;
 }();
 
-ReferencesMenu::ReferencesMenu() : BaseMenu("References") {
+ReferencesMenu::ReferencesMenu() : BaseMenu(tr("References")) {
     auto& RefWinFactory = ReferenceWindowFactory::instance();
     qDebug() << RefWinFactory.availableRefWins();
     for (const QString& RefWinID : RefWinFactory.availableRefWins()){
