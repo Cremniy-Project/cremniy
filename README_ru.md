@@ -115,6 +115,14 @@ mkdir build && cd build
 cmake ../src
 cmake --build .
 ```
+### Сборка в Arch
+```bash
+git clone https://github.com/igmunv/cremniy.git
+cd cremniy
+
+makepkg -si
+```
+Примечание: Если процесс сборки прервется из-за проблем с соединением или ошибок зеркал, пожалуйста, попробуйте запустить команду еще раз.
 
 #### Сборка в режиме Release
 

@@ -116,6 +116,15 @@ cmake ../src
 cmake --build .
 ```
 
+### Build in Arch
+```bash
+git clone https://github.com/igmunv/cremniy.git
+cd cremniy
+
+makepkg -si
+```
+Note: If the build process fails due to connection issues or mirror errors, please try running the command again.
+
 #### Release build
 
 ```bash
