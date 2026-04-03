@@ -10,6 +10,7 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 option(CREMNIY_ENABLE_ASAN "Enable AddressSanitizer for supported debug builds" OFF)
+option(CREMNIY_BUILD_TESTS "Build unit tests (projectsearch_tests); disable if Qt Test / compiler toolchain mismatch" ON)
 
 if(CREMNIY_ENABLE_ASAN)
     if(MSVC)
@@ -23,6 +24,9 @@ endif()
 
 find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Widgets)
 find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Widgets)
+if(CREMNIY_BUILD_TESTS)
+    find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Test)
+endif()
 
 set(PROJECT_SOURCES
         main.cpp
@@ -44,6 +48,15 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
         dialogs/settingsdialog.h
         dialogs/reversecalculatordialog.cpp
         dialogs/reversecalculatordialog.h
+        dialogs/projectsearchdialog.cpp
+        dialogs/projectsearchdialog.h
+        dialogs/projectsearchresultdelegate.cpp
+        dialogs/projectsearchresultdelegate.h
+
+        utils/projectsearch/projectsearchengine.cpp
+        utils/projectsearch/projectsearchengine.h
+        utils/projectsearch/projectsearchworker.cpp
+        utils/projectsearch/projectsearchworker.h
 
         widgets/clickablelineedit.cpp
         widgets/clickablelineedit.h
@@ -165,4 +178,16 @@ install(TARGETS ${PROJECT_NAME}
 
 if(QT_VERSION_MAJOR EQUAL 6)
     qt_finalize_executable(${PROJECT_NAME})
+endif()
+
+if(CREMNIY_BUILD_TESTS)
+    enable_testing()
+
+    qt_add_executable(projectsearch_tests
+        tests/test_projectsearchengine.cpp
+        utils/projectsearch/projectsearchengine.cpp
+    )
+    target_include_directories(projectsearch_tests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+    target_link_libraries(projectsearch_tests PRIVATE Qt${QT_VERSION_MAJOR}::Test Qt${QT_VERSION_MAJOR}::Core)
+    add_test(NAME projectsearch_tests COMMAND projectsearch_tests)
 endif()

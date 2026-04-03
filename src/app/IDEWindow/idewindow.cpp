@@ -1,7 +1,10 @@
 #include "idewindow.h"
+#include "dialogs/projectsearchdialog.h"
 #include "dialogs/filecreatedialog.h"
 #include "QFileSystemModel"
 #include "QMessageBox"
+#include <QDir>
+#include <QFileInfo>
 #include <qheaderview.h>
 #include <qjsondocument.h>
 #include <qjsonobject.h>
@@ -11,7 +14,8 @@
 #include "widgets/CustomCodeEditor.h"
 
 IDEWindow::IDEWindow(QString ProjectPath, QWidget *parent)
-    : QMainWindow(parent), m_projectPath(ProjectPath)
+    : QMainWindow(parent),
+      m_projectPath(QDir::cleanPath(QFileInfo(ProjectPath).absoluteFilePath()))
 {
 
     // - - Window Settings - -
@@ -33,7 +37,7 @@ IDEWindow::IDEWindow(QString ProjectPath, QWidget *parent)
 
     m_verticalSplitter = new QSplitter(Qt::Vertical, m_mainWidget);
 
-    m_terminal = new TerminalWidget(this, ProjectPath);
+    m_terminal = new TerminalWidget(this, m_projectPath);
     m_terminal->setVisible(false);
 
     m_leftSidebar = new QWidget();
@@ -56,12 +60,7 @@ IDEWindow::IDEWindow(QString ProjectPath, QWidget *parent)
     m_mainLayout->addWidget(m_verticalSplitter);
     setCentralWidget(m_mainWidget);
 
-
     // - - Tunning Widgets/Layouts - -
-
-    setCentralWidget(m_mainWidget);
-
-    m_mainLayout->addWidget(m_verticalSplitter);
 
     m_mainSplitter->setSizes({200, 1000});
     m_mainSplitter->setCollapsible(0, false);
@@ -75,10 +74,10 @@ IDEWindow::IDEWindow(QString ProjectPath, QWidget *parent)
     m_filesTreeView->setIndentation(12);
 
     QFileSystemModel *model = new QFileSystemModel(this);
-    model->setRootPath(ProjectPath);
+    model->setRootPath(m_projectPath);
     model->setReadOnly(false);
     m_filesTreeView->setModel(model);
-    m_filesTreeView->setRootIndex(model->index(ProjectPath));
+    m_filesTreeView->setRootIndex(model->index(m_projectPath));
 
     m_filesTreeView->setColumnHidden(1, true);
     m_filesTreeView->setColumnHidden(2, true);
@@ -276,4 +275,23 @@ void IDEWindow::on_SaveFile(){
 void IDEWindow::on_openSettings(){
     SettingsDialog dlg(this);
     dlg.exec();
+}
+
+void IDEWindow::showProjectSearch()
+{
+    if (!m_projectSearchDialog) {
+        m_projectSearchDialog = new ProjectSearchDialog(m_projectPath, this);
+        m_projectSearchDialog->setAttribute(Qt::WA_DeleteOnClose, false);
+        connect(m_projectSearchDialog, &ProjectSearchDialog::openFileRequested, this,
+                &IDEWindow::openSearchResult);
+    }
+    m_projectSearchDialog->show();
+    m_projectSearchDialog->raise();
+    m_projectSearchDialog->activateWindow();
+}
+
+void IDEWindow::openSearchResult(const QString &path, int lineNumber)
+{
+    const QFileInfo fi(path);
+    m_filesTabWidget->openFile(path, fi.fileName(), lineNumber);
 }

@@ -24,6 +24,7 @@ public slots:
     void removeStar();
     void setupStar();
     void saveFile();
+    void navigateToCodeLine(int lineNumber);
 
 signals:
     void removeStarSignal(FileTab* tab);

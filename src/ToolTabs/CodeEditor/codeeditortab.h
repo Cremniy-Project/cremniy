@@ -79,6 +79,7 @@ public slots:
     void setTabData() override;
     void saveTabData() override;
 
+    void goToLine(int lineNumber);
 };
 
 #endif // CODEEDITORTAB_H
