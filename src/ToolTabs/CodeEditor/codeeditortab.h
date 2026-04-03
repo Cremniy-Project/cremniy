@@ -83,6 +83,7 @@ public slots:
     void showSearchBar();
     void hideSearchBar();
 
+    void goToLine(int lineNumber);
 };
 
 #endif // CODEEDITORTAB_H

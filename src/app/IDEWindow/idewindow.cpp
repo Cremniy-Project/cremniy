@@ -1,7 +1,10 @@
 #include "idewindow.h"
+#include "dialogs/projectsearchdialog.h"
 #include "dialogs/filecreatedialog.h"
 #include "QFileSystemModel"
 #include "QMessageBox"
+#include <QDir>
+#include <QFileInfo>
 #include <qheaderview.h>
 #include <qjsondocument.h>
 #include <qjsonobject.h>
@@ -10,7 +13,8 @@
 #include "ui/MenuBar/menubarbuilder.h"
 
 IDEWindow::IDEWindow(QString ProjectPath, QWidget *parent)
-    : QMainWindow(parent)
+    : QMainWindow(parent),
+      m_projectPath(QDir::cleanPath(QFileInfo(ProjectPath).absoluteFilePath()))
 {
 
     // - - Window Settings - -
@@ -247,4 +251,23 @@ void IDEWindow::on_SaveFile(){
 void IDEWindow::on_openSettings(){
     SettingsDialog dlg(this);
     dlg.exec();
+}
+
+void IDEWindow::showProjectSearch()
+{
+    if (!m_projectSearchDialog) {
+        m_projectSearchDialog = new ProjectSearchDialog(m_projectPath, this);
+        m_projectSearchDialog->setAttribute(Qt::WA_DeleteOnClose, false);
+        connect(m_projectSearchDialog, &ProjectSearchDialog::openFileRequested, this,
+                &IDEWindow::openSearchResult);
+    }
+    m_projectSearchDialog->show();
+    m_projectSearchDialog->raise();
+    m_projectSearchDialog->activateWindow();
+}
+
+void IDEWindow::openSearchResult(const QString &path, int lineNumber)
+{
+    const QFileInfo fi(path);
+    m_filesTabWidget->openFile(path, fi.fileName(), lineNumber);
 }

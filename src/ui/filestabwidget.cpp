@@ -1,4 +1,5 @@
 #include "filestabwidget.h"
+#include <QTimer>
 #include <QApplication>
 #include <QCoreApplication>
 #include <QMessageBox>
@@ -21,13 +22,15 @@ void FilesTabWidget::tabSelect(int index) {
 }
 
 // Create new tab and open file if he is not open already
-void FilesTabWidget::openFile(QString filePath, QString tabTitle) {
+void FilesTabWidget::openFile(QString filePath, QString tabTitle, int lineNumber) {
 
     // check already open
     for (int i = 0; i < this->count(); ++i) {
         FileTab *t = qobject_cast<FileTab *>(this->widget(i));
         if (t && t->filePath == filePath) {
             this->setCurrentIndex(i);
+            if (lineNumber > 0)
+                t->navigateToCodeLine(lineNumber);
             return;
         }
     }
@@ -40,6 +43,12 @@ void FilesTabWidget::openFile(QString filePath, QString tabTitle) {
     // - - Connects - -
     connect(filetab, &FileTab::removeStarSignal, this, &FilesTabWidget::removeStar);
     connect(filetab, &FileTab::setupStarSignal, this, &FilesTabWidget::setupStar);
+
+    if (lineNumber > 0) {
+        QTimer::singleShot(0, filetab, [filetab, lineNumber]() {
+            filetab->navigateToCodeLine(lineNumber);
+        });
+    }
 }
 
 void FilesTabWidget::removeStar(FileTab *tab) {

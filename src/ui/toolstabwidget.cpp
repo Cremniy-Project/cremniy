@@ -3,9 +3,25 @@
 #include <qfileinfo.h>
 
 #include "toolstabwidget.h"
+#include "ToolTabs/CodeEditor/codeeditortab.h"
 #include "core/ToolTabFactory.h"
 #include "core/ToolTab.h"
 #include "core/FileDataBuffer.h"
+
+void ToolsTabWidget::activateCodeEditorAtLine(int lineNumber)
+{
+    if (lineNumber < 1)
+        return;
+
+    for (int i = 0; i < count(); ++i) {
+        auto *code = qobject_cast<CodeEditorTab *>(widget(i));
+        if (code) {
+            setCurrentIndex(i);
+            code->goToLine(lineNumber);
+            return;
+        }
+    }
+}
 
 ToolsTabWidget::ToolsTabWidget(QWidget *parent, QString path)
     {

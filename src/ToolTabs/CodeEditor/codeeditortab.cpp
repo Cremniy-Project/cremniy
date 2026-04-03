@@ -12,7 +12,9 @@
 #include <QLineEdit>
 #include <QShortcut>
 #include <QKeySequence>
+#include <QTextBlock>
 #include <QTextCursor>
+#include <QTextDocument>
 #include <QHBoxLayout>
 
 
@@ -321,6 +323,23 @@ void CodeEditorTab::hideSearchBar()
 {
     m_searchWidget->hide();
     m_codeEditorWidget->setFocus(); // Возвращаем фокус в редактор
+}
+
+void CodeEditorTab::goToLine(int lineNumber)
+{
+    if (lineNumber < 1)
+        return;
+
+    QTextDocument *doc = m_codeEditorWidget->document();
+    const QTextBlock block = doc->findBlockByNumber(lineNumber - 1);
+    if (!block.isValid())
+        return;
+
+    QTextCursor cursor(block);
+    cursor.movePosition(QTextCursor::StartOfLine);
+    m_codeEditorWidget->setTextCursor(cursor);
+    m_codeEditorWidget->setFocus();
+    m_codeEditorWidget->centerCursor();
 }
 
 void CodeEditorTab::performSearch(bool backward)

@@ -10,7 +10,7 @@ public:
   FilesTabWidget(QWidget *parent = nullptr);
 
   void tabSelect(int index);
-  void openFile(QString fullPath, QString fileName);
+  void openFile(QString fullPath, QString fileName, int lineNumber = -1);
 
 protected:
   bool eventFilter(QObject *obj, QEvent *event) override;

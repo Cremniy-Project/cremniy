@@ -32,6 +32,15 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
         dialogs/settingsdialog.h
         dialogs/reversecalculatordialog.cpp
         dialogs/reversecalculatordialog.h
+        dialogs/projectsearchdialog.cpp
+        dialogs/projectsearchdialog.h
+        dialogs/projectsearchresultdelegate.cpp
+        dialogs/projectsearchresultdelegate.h
+
+        utils/projectsearch/projectsearchengine.cpp
+        utils/projectsearch/projectsearchengine.h
+        utils/projectsearch/projectsearchworker.cpp
+        utils/projectsearch/projectsearchworker.h
 
         widgets/clickablelineedit.cpp
         widgets/clickablelineedit.h
@@ -151,3 +160,13 @@ install(TARGETS ${PROJECT_NAME}
 if(QT_VERSION_MAJOR EQUAL 6)
     qt_finalize_executable(${PROJECT_NAME})
 endif()
+
+enable_testing()
+
+qt_add_executable(projectsearch_tests
+    tests/test_projectsearchengine.cpp
+    utils/projectsearch/projectsearchengine.cpp
+)
+target_include_directories(projectsearch_tests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+target_link_libraries(projectsearch_tests PRIVATE Qt${QT_VERSION_MAJOR}::Test Qt${QT_VERSION_MAJOR}::Core)
+add_test(NAME projectsearch_tests COMMAND projectsearch_tests)

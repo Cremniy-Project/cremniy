@@ -37,3 +37,8 @@ void FileTab::saveFile(){
     emit removeStarSignal(this);
     emit saveFileSignal();
 }
+
+void FileTab::navigateToCodeLine(int lineNumber)
+{
+    m_tooltabWidget->activateCodeEditorAtLine(lineNumber);
+}
