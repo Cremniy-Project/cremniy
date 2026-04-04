@@ -8,6 +8,8 @@
 #include <QDir>
 #include <QApplication>
 #include <QDebug>
+#include <QVBoxLayout>
+#include <QProcessEnvironment>
 
 #ifdef Q_OS_WIN
 #include <windows.h>
@@ -18,6 +20,7 @@
 #include <unistd.h>
 #endif
 
+// Вспомогательная функция для очистки текста (из ветки dev)
 static QString stripAnsiCodes(const QString &text) {
     if (text.isEmpty()) return text;
     static QRegularExpression ansiRegex(
@@ -27,23 +30,22 @@ static QString stripAnsiCodes(const QString &text) {
 
     QString cleaned = text;
     cleaned.remove(ansiRegex);
-    // оставляем \n и \t (не используйте .simplified())
     return cleaned;
 }
 
+// Объединенный конструктор: поддерживаем рабочую директорию и темы
 TerminalWidget::TerminalWidget(QWidget *parent, const QString &workingDirectory)
     : QWidget(parent), m_workingDirectory(workingDirectory)
 {
     auto *layout = new QVBoxLayout(this);
     layout->setContentsMargins(0, 0, 0, 0);
 
-    m_display = new QPlainTextEdit(this);
-    m_display->setStyleSheet(
-        "background-color: #1e1e1e; color: #cccccc; "
-        "font-family: 'Consolas', 'DejaVu Sans Mono', monospace; font-size: 10pt;"
-    );
+    // Инициализация дисплея (Theme-friendly)
+    m_display = new QAnsiTextEdit(this); 
+    m_display->setObjectName("terminalDisplay");
+    // Оставляем только шрифт, цвета придут из QSS
+    m_display->setStyleSheet("font-family: 'Consolas', 'DejaVu Sans Mono', monospace; font-size: 10pt;");
     layout->addWidget(m_display);
-    setFocusProxy(m_display);
 
     m_process = new QProcess(this);
     m_process->setProcessChannelMode(QProcess::MergedChannels);
@@ -63,8 +65,12 @@ void TerminalWidget::setupShell() {
     }
 
 #ifdef Q_OS_WIN
-    // Используем полный путь на всякий случай
-    m_process->start("powershell.exe", QStringList() << "-NoLogo" << "-NoExit" << "-Command" << "chcp 65001; clear");
+    QProcessEnvironment env = QProcessEnvironment::systemEnvironment();
+    // Настройки для корректного отображения цветов в Windows PowerShell
+    env.insert("TERM", "xterm-256color");
+    env.insert("COLORTERM", "truecolor");
+    m_process->setProcessEnvironment(env);
+    m_process->start("powershell.exe", QStringList() << "-NoLogo" << "-NoExit" << "-Command" << "$env:TERM='xterm-256color'; [Console]::OutputEncoding = [System.Text.Encoding]::UTF8; chcp 65001; clear");
 #else
     m_process->start("/bin/bash", QStringList() << "-i");
 #endif
@@ -75,7 +81,8 @@ void TerminalWidget::onReadyRead() {
     QString output = QString::fromUtf8(data); 
     
     m_display->moveCursor(QTextCursor::End);
-    m_display->insertPlainText(stripAnsiCodes(output));
+    // Используем ANSI-парсер
+    m_display->appendAnsiText(output); 
     
     m_lastPromptPos = m_display->toPlainText().length();
     m_display->moveCursor(QTextCursor::End);
@@ -86,10 +93,10 @@ bool TerminalWidget::eventFilter(QObject *obj, QEvent *event) {
         auto *keyEvent = static_cast<QKeyEvent *>(event);
         QTextCursor cursor = m_display->textCursor();
 
-        // Ctrl+C
+        // Обработка Ctrl+C
         if ((keyEvent->key() == Qt::Key_C) && (keyEvent->modifiers() & Qt::ControlModifier)) {
             if (cursor.hasSelection()) {
-                return false; // Копируем, если выделено
+                return false; // Позволяем скопировать текст
             } else {
                 if (m_process->state() == QProcess::Running) {
 #ifdef Q_OS_WIN
@@ -115,6 +122,7 @@ bool TerminalWidget::eventFilter(QObject *obj, QEvent *event) {
             m_display->setTextCursor(cursor);
             return true;
         }
+
         bool isModifierOnly = (keyEvent->modifiers() != Qt::NoModifier && keyEvent->text().isEmpty());
         bool isNavigation = (keyEvent->key() == Qt::Key_Left || keyEvent->key() == Qt::Key_Right || 
                              keyEvent->key() == Qt::Key_Up || keyEvent->key() == Qt::Key_Down ||
@@ -185,7 +193,7 @@ void TerminalWidget::showHistory(int direction) {
         replaceCurrentCommand(""); 
         return;
     }
-
+    
     replaceCurrentCommand(m_history[m_historyIndex]);
 }
 
@@ -229,6 +237,8 @@ TerminalWidget::~TerminalWidget() {
         disconnect(m_process, nullptr, this, nullptr);
     }
     
+    if (m_process->state() == QProcess::Running) {
+        m_process->terminate();
     if (m_process && m_process->state() != QProcess::NotRunning) {
         m_process->kill();
         m_process->waitForFinished(500);

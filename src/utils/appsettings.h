@@ -48,6 +48,10 @@ public:
     static bool exportToIni(const QString &filePath, QString *error = nullptr);
     static bool importFromIni(const QString &filePath, QString *error = nullptr);
 
+    /** Empty → bundled default (see ThemeService::defaultResourcePath). */
+    static QString themeQssPath();
+    static void setThemeQssPath(const QString &path);
+
 private:
     static QString keyDisasmBackend();
     static QString keyObjdumpPath();
@@ -56,6 +60,7 @@ private:
     static QString keyRadare2AnalysisLevel();
     static QString keyAsmSyntax();
     static QString keyRadare2PreCommands();
+    static QString keyThemeQssPath();
 };
 
 #endif // APPSETTINGS_H
