@@ -2671,9 +2671,26 @@ void CustomCodeEditor::toggleLineComment()
 
 void CustomCodeEditor::insertNewline()
 {
-    replaceRange(hasSelection() ? m_selectionStart : m_cursorBytePos,
-                 hasSelection() ? m_selectionLength : 0,
-                 QByteArray("\n"));
+    if (!m_buffer)
+        return;
+
+    const qint64 insertPos = hasSelection() ? m_selectionStart : m_cursorBytePos;
+    const qint64 removeLength = hasSelection() ? m_selectionLength : 0;
+    const qint64 lineNum = lineFromBytePos(insertPos);
+    const QString lineText = displayTextForLine(lineNum);
+
+    QString indent;
+    for (const QChar ch : lineText) {
+        if (ch == QLatin1Char(' ') || ch == QLatin1Char('\t')) {
+            indent.append(ch);
+            continue;
+        }
+        break;
+    }
+
+    QByteArray replacement("\n");
+    replacement.append(indent.toUtf8());
+    replaceRange(insertPos, removeLength, replacement);
 }
 
 void CustomCodeEditor::insertTab()
