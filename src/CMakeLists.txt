@@ -99,7 +99,7 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
 
     )
     target_include_directories(${PROJECT_NAME} PRIVATE
-        ${CMAKE_SOURCE_DIR}/../external/cremniy-codeeditor/include
+        ${CMAKE_CURRENT_SOURCE_DIR}/libs/cremniy-codeeditor/include
         ${CMAKE_CURRENT_SOURCE_DIR}
         ${CMAKE_CURRENT_SOURCE_DIR}/widgets
         ${CMAKE_CURRENT_SOURCE_DIR}/include
@@ -119,7 +119,8 @@ else()
     endif()
 endif()
 
-add_subdirectory(${CMAKE_SOURCE_DIR}/../external/cremniy-codeeditor ${CMAKE_BINARY_DIR}/external/cremniy-codeeditor)
+set(BUILD_EXAMPLE OFF CACHE BOOL "Disable vendored code editor example" FORCE)
+add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/libs/cremniy-codeeditor ${CMAKE_BINARY_DIR}/libs/cremniy-codeeditor)
 
 
 # - - Tool Tabs - -
