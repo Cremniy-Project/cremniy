@@ -56,6 +56,7 @@ private:
 
     // - - Terminal Widget - -
     TerminalWidget* m_terminal;
+    QString m_projectPath;
 
     QString m_projectPath;
     ProjectSearchDialog *m_projectSearchDialog = nullptr;
