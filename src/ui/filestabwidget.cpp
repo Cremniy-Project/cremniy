@@ -29,15 +29,20 @@ void FilesTabWidget::tabSelect(int index) {
 }
 
 // Create new tab and open file if he is not open already
-void FilesTabWidget::openFile(QString filePath, QString tabTitle, int lineNumber) {
+void FilesTabWidget::openFile(QString filePath, QString tabTitle, int lineNumber,
+                              const QString &searchNeedle) {
 
     // check already open
     for (int i = 0; i < this->count(); ++i) {
         FileTab *t = qobject_cast<FileTab *>(this->widget(i));
         if (t && t->filePath == filePath) {
             this->setCurrentIndex(i);
-            if (lineNumber > 0)
-                t->navigateToCodeLine(lineNumber);
+            if (lineNumber > 0) {
+                if (!searchNeedle.isEmpty())
+                    t->navigateToSearchHit(lineNumber, searchNeedle);
+                else
+                    t->navigateToCodeLine(lineNumber, false);
+            }
             return;
         }
     }
@@ -53,8 +58,11 @@ void FilesTabWidget::openFile(QString filePath, QString tabTitle, int lineNumber
     connect(filetab, &FileTab::pinnedChanged, this, &FilesTabWidget::updatePinnedState);
 
     if (lineNumber > 0) {
-        QTimer::singleShot(0, filetab, [filetab, lineNumber]() {
-            filetab->navigateToCodeLine(lineNumber);
+        QTimer::singleShot(0, filetab, [filetab, lineNumber, searchNeedle]() {
+            if (!searchNeedle.isEmpty())
+                filetab->navigateToSearchHit(lineNumber, searchNeedle);
+            else
+                filetab->navigateToCodeLine(lineNumber, false);
         });
     }
 }

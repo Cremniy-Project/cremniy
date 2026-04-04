@@ -3,16 +3,33 @@
 
 #include <QDirIterator>
 #include <QFile>
-#include <QTextStream>
-#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
-#include <QStringConverter>
-#else
-#include <QTextCodec>
-#endif
+#include <QFileInfo>
 
 namespace {
 
 constexpr int kBatchSize = 80;
+
+QString decodeUtf8LineBody(const QByteArray &data, qint64 start, qint64 endExclusive)
+{
+    if (endExclusive <= start)
+        return {};
+    QByteArray body = data.mid(static_cast<int>(start), static_cast<int>(endExclusive - start));
+    if (start == 0 && body.size() >= 3 && static_cast<uchar>(body[0]) == 0xEF && static_cast<uchar>(body[1]) == 0xBB &&
+        static_cast<uchar>(body[2]) == 0xBF) {
+        body = body.mid(3);
+    }
+    return QString::fromUtf8(body);
+}
+
+void pushHit(const QString &line, const QString &needle, const QString &filePath, QStringList &batchPaths,
+             QList<int> &batchLines, QStringList &batchPreviews, int lineNumber)
+{
+    if (line.contains(needle, Qt::CaseInsensitive)) {
+        batchPaths.append(filePath);
+        batchLines.append(lineNumber);
+        batchPreviews.append(line);
+    }
+}
 
 } // namespace
 
@@ -46,10 +63,8 @@ void ProjectSearchWorker::runSearch(QString rootPath, QString query)
         batchPreviews.clear();
     };
 
-    const QString rootClean =
-        QDir::cleanPath(QFileInfo(rootPath).absoluteFilePath());
-    QDirIterator it(rootClean, QDir::Files | QDir::Readable | QDir::NoSymLinks,
-                    QDirIterator::Subdirectories);
+    const QString rootClean = QDir::cleanPath(QFileInfo(rootPath).absoluteFilePath());
+    QDirIterator it(rootClean, QDir::Files | QDir::Readable | QDir::NoSymLinks, QDirIterator::Subdirectories);
 
     while (it.hasNext()) {
         if (m_cancelled.load())
@@ -71,28 +86,59 @@ void ProjectSearchWorker::runSearch(QString rootPath, QString query)
         }
         file.seek(0);
 
-        QTextStream stream(&file);
-#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
-        stream.setEncoding(QStringConverter::Utf8);
-#else
-        if (QTextCodec *utf8 = QTextCodec::codecForName("UTF-8"))
-            stream.setCodec(utf8);
-#endif
+        const QByteArray fileData = file.readAll();
+        file.close();
 
+        const qint64 bufferSize = fileData.size();
+        qint64 lineStart = 0;
         int lineNumber = 0;
-        while (!stream.atEnd()) {
+
+        for (qint64 absolutePos = 0; absolutePos < bufferSize; ++absolutePos) {
             if (m_cancelled.load())
                 break;
 
-            ++lineNumber;
-            const QString line = stream.readLine();
-            if (line.contains(needle, Qt::CaseInsensitive)) {
-                batchPaths.append(filePath);
-                batchLines.append(lineNumber);
-                batchPreviews.append(line);
+            const char c = fileData[static_cast<int>(absolutePos)];
+            if (c == '\n') {
+                ++lineNumber;
+                const QString line = decodeUtf8LineBody(fileData, lineStart, absolutePos);
+                pushHit(line, needle, filePath, batchPaths, batchLines, batchPreviews, lineNumber);
                 if (batchPaths.size() >= kBatchSize)
                     flushBatch();
+                lineStart = absolutePos + 1;
+            } else if (c == '\r') {
+                if (absolutePos + 1 < bufferSize && fileData[static_cast<int>(absolutePos + 1)] == '\n') {
+                    ++lineNumber;
+                    const QString line = decodeUtf8LineBody(fileData, lineStart, absolutePos);
+                    pushHit(line, needle, filePath, batchPaths, batchLines, batchPreviews, lineNumber);
+                    if (batchPaths.size() >= kBatchSize)
+                        flushBatch();
+                    lineStart = absolutePos + 2;
+                    ++absolutePos;
+                } else {
+                    ++lineNumber;
+                    const QString line = decodeUtf8LineBody(fileData, lineStart, absolutePos);
+                    pushHit(line, needle, filePath, batchPaths, batchLines, batchPreviews, lineNumber);
+                    if (batchPaths.size() >= kBatchSize)
+                        flushBatch();
+                    lineStart = absolutePos + 1;
+                }
             }
+        }
+
+        if (m_cancelled.load())
+            break;
+
+        if (lineStart < bufferSize) {
+            ++lineNumber;
+            const QString line = decodeUtf8LineBody(fileData, lineStart, bufferSize);
+            pushHit(line, needle, filePath, batchPaths, batchLines, batchPreviews, lineNumber);
+            if (batchPaths.size() >= kBatchSize)
+                flushBatch();
+        } else if (lineStart == bufferSize && bufferSize > 0) {
+            ++lineNumber;
+            pushHit(QString(), needle, filePath, batchPaths, batchLines, batchPreviews, lineNumber);
+            if (batchPaths.size() >= kBatchSize)
+                flushBatch();
         }
     }
 

@@ -22,15 +22,17 @@ public:
     explicit ProjectSearchDialog(const QString &projectRoot, QWidget *parent = nullptr);
     ~ProjectSearchDialog() override;
 
+    void setSearchQuery(const QString &text);
+
 signals:
-    void openFileRequested(const QString &path, int lineNumber);
+    void openFileRequested(const QString &path, int lineNumber, const QString &query);
 
 private slots:
     void onSearchClicked();
     void onHitsBatch(const QStringList &filePaths, const QList<int> &lineNumbers,
                      const QStringList &linePreviews);
     void onSearchFinished();
-    void onTreeItemDoubleClicked(QTreeWidgetItem *item, int column);
+    void onTreeItemActivated(QTreeWidgetItem *item, int column);
 
 protected:
     void closeEvent(QCloseEvent *event) override;
@@ -38,6 +40,7 @@ protected:
 
 private:
     void stopActiveSearch();
+    void openResultIfLeaf(QTreeWidgetItem *item);
     QString formatFileGroupLabel(const QString &absPath) const;
 
     QString m_projectRoot;

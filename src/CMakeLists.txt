@@ -10,7 +10,7 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 option(CREMNIY_ENABLE_ASAN "Enable AddressSanitizer for supported debug builds" OFF)
-option(CREMNIY_BUILD_TESTS "Build unit tests (projectsearch_tests); disable if Qt Test / compiler toolchain mismatch" ON)
+option(CREMNIY_BUILD_TESTS "Build projectsearch unit tests (needs Qt Test; disable if that target fails to compile)" ON)
 
 if(CREMNIY_ENABLE_ASAN)
     if(MSVC)
@@ -25,7 +25,7 @@ endif()
 find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Widgets)
 find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Widgets)
 if(CREMNIY_BUILD_TESTS)
-    find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Test)
+    find_package(Qt${QT_VERSION_MAJOR} QUIET COMPONENTS Test)
 endif()
 
 set(PROJECT_SOURCES
@@ -148,6 +148,10 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
     cremniy-codeeditor
 )
 
+if(WIN32 AND CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+    target_compile_options(${PROJECT_NAME} PRIVATE "-Wa,-mbig-obj")
+endif()
+
 find_program(WINDEPLOYQT_EXECUTABLE windeployqt)
 
 if(WIN32 AND QT_VERSION_MAJOR EQUAL 6 AND WINDEPLOYQT_EXECUTABLE)
@@ -180,9 +184,8 @@ if(QT_VERSION_MAJOR EQUAL 6)
     qt_finalize_executable(${PROJECT_NAME})
 endif()
 
-if(CREMNIY_BUILD_TESTS)
+if(CREMNIY_BUILD_TESTS AND TARGET Qt${QT_VERSION_MAJOR}::Test)
     enable_testing()
-
     qt_add_executable(projectsearch_tests
         tests/test_projectsearchengine.cpp
         utils/projectsearch/projectsearchengine.cpp
@@ -190,4 +193,7 @@ if(CREMNIY_BUILD_TESTS)
     target_include_directories(projectsearch_tests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
     target_link_libraries(projectsearch_tests PRIVATE Qt${QT_VERSION_MAJOR}::Test Qt${QT_VERSION_MAJOR}::Core)
     add_test(NAME projectsearch_tests COMMAND projectsearch_tests)
+elseif(CREMNIY_BUILD_TESTS)
+    message(STATUS "Qt Test not available — skipping projectsearch_tests (application still builds). "
+                   "Install Qt Test or configure with -DCREMNIY_BUILD_TESTS=OFF.")
 endif()

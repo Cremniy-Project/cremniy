@@ -4,6 +4,7 @@
 
 #include <QAbstractItemView>
 #include <QCloseEvent>
+#include <QColor>
 #include <QResizeEvent>
 #include <QDir>
 #include <QFileInfo>
@@ -39,53 +40,79 @@ ProjectSearchDialog::~ProjectSearchDialog()
     stopActiveSearch();
 }
 
+void ProjectSearchDialog::setSearchQuery(const QString &text)
+{
+    if (!m_queryEdit)
+        return;
+    m_queryEdit->setText(text);
+    if (!text.isEmpty()) {
+        m_queryEdit->setFocus(Qt::OtherFocusReason);
+        m_queryEdit->selectAll();
+    }
+}
+
 ProjectSearchDialog::ProjectSearchDialog(const QString &projectRoot, QWidget *parent)
     : QDialog(parent), m_projectRoot(QDir::cleanPath(QFileInfo(projectRoot).absoluteFilePath()))
 {
+    setObjectName(QStringLiteral("ProjectSearchDialog"));
     setWindowTitle(tr("Find in Project"));
     setMinimumSize(680, 440);
 
+    auto *searchLabel = new QLabel(tr("Search"), this);
+    searchLabel->setObjectName(QStringLiteral("projectSearchFieldLabel"));
+
     m_queryEdit = new QLineEdit(this);
-    m_queryEdit->setPlaceholderText(tr("Search"));
+    m_queryEdit->setObjectName(QStringLiteral("projectSearchQuery"));
+    m_queryEdit->setPlaceholderText(tr("Type a pattern…"));
+    m_queryEdit->setClearButtonEnabled(true);
 
     m_tree = new QTreeWidget(this);
     m_tree->setColumnCount(2);
     m_tree->setHeaderLabels({QStringLiteral("Line"), QStringLiteral("Match")});
+    if (QTreeWidgetItem *hdr = m_tree->headerItem()) {
+        hdr->setTextAlignment(kColLine, Qt::AlignLeft | Qt::AlignVCenter);
+        hdr->setTextAlignment(kColPreview, Qt::AlignLeft | Qt::AlignVCenter);
+    }
+    m_tree->header()->setDefaultAlignment(Qt::AlignLeft | Qt::AlignVCenter);
     m_tree->header()->setStretchLastSection(false);
+    m_tree->header()->setMinimumSectionSize(40);
     m_tree->header()->setSectionResizeMode(kColLine, QHeaderView::ResizeToContents);
     m_tree->header()->setSectionResizeMode(kColPreview, QHeaderView::Stretch);
     m_tree->setRootIsDecorated(true);
-    m_tree->setIndentation(16);
+    m_tree->setIndentation(6);
     m_tree->setUniformRowHeights(true);
     m_tree->setSelectionMode(QAbstractItemView::SingleSelection);
-    m_tree->setAlternatingRowColors(true);
+    m_tree->setAlternatingRowColors(false);
 
     m_previewDelegate = new ProjectSearchResultDelegate(m_tree);
     m_previewDelegate->setPreviewColumn(kColPreview);
     m_tree->setItemDelegateForColumn(kColPreview, m_previewDelegate);
 
-    m_statusLabel = new QLabel(tr("Ready."), this);
-    m_statusLabel->setWordWrap(true);
+    m_statusLabel = new QLabel(QString(), this);
+    m_statusLabel->setObjectName(QStringLiteral("projectSearchStatus"));
+    m_statusLabel->setWordWrap(false);
+    m_statusLabel->setMinimumHeight(m_statusLabel->fontMetrics().height());
 
     m_searchBtn = new QPushButton(tr("Search"), this);
+    m_searchBtn->setObjectName(QStringLiteral("projectSearchPrimary"));
+    m_searchBtn->setDefault(true);
+    m_searchBtn->setAutoDefault(true);
 
-    auto *closeBtn = new QPushButton(tr("Close"), this);
-    connect(closeBtn, &QPushButton::clicked, this, &QDialog::close);
-
-    auto *topBtnRow = new QHBoxLayout();
-    topBtnRow->addWidget(m_searchBtn);
-    topBtnRow->addStretch();
-    topBtnRow->addWidget(closeBtn);
+    auto *searchRow = new QHBoxLayout();
+    searchRow->setSpacing(10);
+    searchRow->addWidget(m_queryEdit, 1);
+    searchRow->addWidget(m_searchBtn);
 
     auto *main = new QVBoxLayout(this);
-    main->addWidget(m_queryEdit);
-    main->addWidget(m_tree, 1);
+    main->setSpacing(8);
+    main->setContentsMargins(16, 16, 16, 16);
+    main->addWidget(searchLabel);
+    main->addLayout(searchRow);
     main->addWidget(m_statusLabel);
-    main->addLayout(topBtnRow);
+    main->addWidget(m_tree, 1);
 
     connect(m_searchBtn, &QPushButton::clicked, this, &ProjectSearchDialog::onSearchClicked);
-    connect(m_tree, &QTreeWidget::itemDoubleClicked, this,
-            &ProjectSearchDialog::onTreeItemDoubleClicked);
+    connect(m_tree, &QTreeWidget::itemClicked, this, &ProjectSearchDialog::onTreeItemActivated);
 }
 
 void ProjectSearchDialog::closeEvent(QCloseEvent *event)
@@ -145,6 +172,7 @@ void ProjectSearchDialog::onSearchClicked()
     m_fileNodes.clear();
     m_tree->clear();
     m_statusLabel->setText(tr("Searching…"));
+    m_statusLabel->setVisible(true);
     m_searchBtn->setEnabled(false);
 
     m_thread = new QThread(this);
@@ -183,14 +211,14 @@ void ProjectSearchDialog::onHitsBatch(const QStringList &filePaths, const QList<
             group->setText(kColLine, formatFileGroupLabel(filePath));
             group->setFirstColumnSpanned(true);
             group->setExpanded(true);
-            group->setForeground(kColLine, palette().color(QPalette::Link));
+            group->setForeground(kColLine, QColor(QStringLiteral("#9dc3e6")));
             m_fileNodes.insert(key, group);
         }
 
         auto *lineItem = new QTreeWidgetItem(group);
         lineItem->setText(kColLine, QString::number(lineNumber));
         lineItem->setData(kColLine, kLineRole, lineNumber);
-        lineItem->setTextAlignment(kColLine, Qt::AlignRight | Qt::AlignVCenter);
+        lineItem->setTextAlignment(kColLine, Qt::AlignLeft | Qt::AlignVCenter);
         lineItem->setText(kColPreview, preview);
         ++m_matchCount;
     }
@@ -200,14 +228,17 @@ void ProjectSearchDialog::onHitsBatch(const QStringList &filePaths, const QList<
 void ProjectSearchDialog::onSearchFinished()
 {
     m_searchBtn->setEnabled(true);
-    m_statusLabel->setText(tr("Done. %1 match(es).").arg(m_matchCount));
+    const int nFiles = m_fileNodes.size();
+    const QString resPhrase =
+        (m_matchCount == 1) ? tr("1 result") : tr("%1 results").arg(m_matchCount);
+    const QString filePhrase = (nFiles == 1) ? tr("1 file") : tr("%1 files").arg(nFiles);
+    m_statusLabel->setText(tr("%1 in %2").arg(resPhrase).arg(filePhrase));
     m_thread = nullptr;
     m_worker = nullptr;
 }
 
-void ProjectSearchDialog::onTreeItemDoubleClicked(QTreeWidgetItem *item, int column)
+void ProjectSearchDialog::openResultIfLeaf(QTreeWidgetItem *item)
 {
-    Q_UNUSED(column);
     if (!item || !item->parent())
         return;
 
@@ -215,7 +246,13 @@ void ProjectSearchDialog::onTreeItemDoubleClicked(QTreeWidgetItem *item, int col
     const QString path = group->data(kColLine, kPathRole).toString();
     const int line = item->data(kColLine, kLineRole).toInt();
     if (!path.isEmpty() && line > 0)
-        emit openFileRequested(path, line);
+        emit openFileRequested(path, line, m_activeQuery.trimmed());
+}
+
+void ProjectSearchDialog::onTreeItemActivated(QTreeWidgetItem *item, int column)
+{
+    Q_UNUSED(column);
+    openResultIfLeaf(item);
 }
 
 void ProjectSearchDialog::stopActiveSearch()

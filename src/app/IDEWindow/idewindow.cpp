@@ -9,9 +9,23 @@
 #include <qjsondocument.h>
 #include <qjsonobject.h>
 #include <QApplication>
+#include <QWidget>
 #include "dialogs/settingsdialog.h"
 #include "ui/MenuBar/menubarbuilder.h"
 #include "widgets/CustomCodeEditor.h"
+
+namespace {
+
+CustomCodeEditor *focusedCustomCodeEditor()
+{
+    for (QWidget *w = QApplication::focusWidget(); w; w = w->parentWidget()) {
+        if (auto *ce = qobject_cast<CustomCodeEditor *>(w))
+            return ce;
+    }
+    return nullptr;
+}
+
+} // namespace
 
 IDEWindow::IDEWindow(QString ProjectPath, QWidget *parent)
     : QMainWindow(parent),
@@ -279,19 +293,32 @@ void IDEWindow::on_openSettings(){
 
 void IDEWindow::showProjectSearch()
 {
+    QString prefill;
+    if (CustomCodeEditor *ce = focusedCustomCodeEditor()) {
+        if (ce->hasSelection()) {
+            QString t = ce->selectedText();
+            const int nl = t.indexOf(QLatin1Char('\n'));
+            if (nl >= 0)
+                t = t.left(nl);
+            prefill = t.trimmed();
+        }
+    }
+
     if (!m_projectSearchDialog) {
         m_projectSearchDialog = new ProjectSearchDialog(m_projectPath, this);
         m_projectSearchDialog->setAttribute(Qt::WA_DeleteOnClose, false);
         connect(m_projectSearchDialog, &ProjectSearchDialog::openFileRequested, this,
                 &IDEWindow::openSearchResult);
     }
+    if (!prefill.isEmpty())
+        m_projectSearchDialog->setSearchQuery(prefill);
     m_projectSearchDialog->show();
     m_projectSearchDialog->raise();
     m_projectSearchDialog->activateWindow();
 }
 
-void IDEWindow::openSearchResult(const QString &path, int lineNumber)
+void IDEWindow::openSearchResult(const QString &path, int lineNumber, const QString &query)
 {
     const QFileInfo fi(path);
-    m_filesTabWidget->openFile(path, fi.fileName(), lineNumber);
+    m_filesTabWidget->openFile(path, fi.fileName(), lineNumber, query);
 }

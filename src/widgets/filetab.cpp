@@ -46,7 +46,12 @@ void FileTab::saveFile(){
     emit saveFileSignal();
 }
 
-void FileTab::navigateToCodeLine(int lineNumber)
+void FileTab::navigateToCodeLine(int lineNumber, bool selectWholeLine)
 {
-    m_tooltabWidget->activateCodeEditorAtLine(lineNumber);
+    m_tooltabWidget->activateCodeEditorAtLine(lineNumber, selectWholeLine);
+}
+
+void FileTab::navigateToSearchHit(int lineNumber, const QString &needle)
+{
+    m_tooltabWidget->activateCodeEditorSearchHit(lineNumber, needle);
 }

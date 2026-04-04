@@ -263,11 +263,20 @@ void CodeEditorTab::saveTabData()
     emit refreshDataAllTabsSignal();
 }
 
-void CodeEditorTab::goToLine(int lineNumber)
+void CodeEditorTab::goToLine(int lineNumber, bool selectWholeLine)
 {
     if (lineNumber < 1)
         return;
     if (m_overlayWidget && !m_overlayWidget->isHidden())
         return;
-    m_codeEditorWidget->goToLine(lineNumber);
+    m_codeEditorWidget->goToLine(lineNumber, selectWholeLine);
+}
+
+void CodeEditorTab::goToSearchHit(int lineNumber, const QString &needle)
+{
+    if (lineNumber < 1)
+        return;
+    if (m_overlayWidget && !m_overlayWidget->isHidden())
+        return;
+    m_codeEditorWidget->revealSearchHit(lineNumber, needle);
 }

@@ -114,7 +114,7 @@ public slots:
     void on_Toggle_FileTree(bool checked);
 
     void showProjectSearch();
-    void openSearchResult(const QString &path, int lineNumber);
+    void openSearchResult(const QString &path, int lineNumber, const QString &query);
 
 signals:
     void saveFileSignal();
