@@ -47,10 +47,14 @@ private:
 
     // - - General Widgets - -
     FilesTabWidget* m_filesTabWidget;
+
+    // - - Sidebar Widgets - -
+    QWidget* m_leftSidebar;
     FileTreeView* m_filesTreeView;
 
     // - - Terminal Widget - -
     TerminalWidget* m_terminal;
+    QString m_projectPath;
 
 
 public slots:
@@ -86,6 +90,11 @@ public slots:
      * @brief Отображение терминала
     */
     void on_Toggle_Terminal(bool checked);
+
+    /**
+     * @brief Отображение дерева файлов
+    */
+    void on_Toggle_FileTree(bool checked);
 
 
 signals:

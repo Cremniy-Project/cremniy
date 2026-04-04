@@ -8,6 +8,8 @@
 #include <QDir>
 #include <QApplication>
 #include <QDebug>
+#include <QVBoxLayout>
+#include <QProcessEnvironment>
 
 #ifdef Q_OS_WIN
 #include <windows.h>
@@ -18,12 +20,30 @@
 #include <unistd.h>
 #endif
 
-TerminalWidget::TerminalWidget(QWidget *parent) : QWidget(parent) {
+// Вспомогательная функция для очистки текста (из ветки dev)
+static QString stripAnsiCodes(const QString &text) {
+    if (text.isEmpty()) return text;
+    static QRegularExpression ansiRegex(
+        "(\x1b\\][0-9];.*?\x07|"       // OSC (Operating System Commands)
+        "\x1b\\[[0-9;?]*[A-Za-z])"      // CSI (Control Sequence Introducer)
+    );
+
+    QString cleaned = text;
+    cleaned.remove(ansiRegex);
+    return cleaned;
+}
+
+// Объединенный конструктор: поддерживаем рабочую директорию и темы
+TerminalWidget::TerminalWidget(QWidget *parent, const QString &workingDirectory)
+    : QWidget(parent), m_workingDirectory(workingDirectory)
+{
     auto *layout = new QVBoxLayout(this);
     layout->setContentsMargins(0, 0, 0, 0);
 
+    // Инициализация дисплея (Theme-friendly)
     m_display = new QAnsiTextEdit(this); 
     m_display->setObjectName("terminalDisplay");
+    // Оставляем только шрифт, цвета придут из QSS
     m_display->setStyleSheet("font-family: 'Consolas', 'DejaVu Sans Mono', monospace; font-size: 10pt;");
     layout->addWidget(m_display);
 
@@ -39,8 +59,14 @@ TerminalWidget::TerminalWidget(QWidget *parent) : QWidget(parent) {
 }
 
 void TerminalWidget::setupShell() {
+    QString workingDirectory = m_workingDirectory;
+    if (!workingDirectory.isEmpty() && QDir(workingDirectory).exists()) {
+        m_process->setWorkingDirectory(workingDirectory);
+    }
+
 #ifdef Q_OS_WIN
     QProcessEnvironment env = QProcessEnvironment::systemEnvironment();
+    // Настройки для корректного отображения цветов в Windows PowerShell
     env.insert("TERM", "xterm-256color");
     env.insert("COLORTERM", "truecolor");
     m_process->setProcessEnvironment(env);
@@ -55,9 +81,7 @@ void TerminalWidget::onReadyRead() {
     QString output = QString::fromUtf8(data); 
     
     m_display->moveCursor(QTextCursor::End);
-    
-    // Вместо insertPlainText используем метод из QAnsiTextEdit
-    // В этой библиотеке метод обычно называется insertAnsiText
+    // Используем ANSI-парсер
     m_display->appendAnsiText(output); 
     
     m_lastPromptPos = m_display->toPlainText().length();
@@ -69,10 +93,10 @@ bool TerminalWidget::eventFilter(QObject *obj, QEvent *event) {
         auto *keyEvent = static_cast<QKeyEvent *>(event);
         QTextCursor cursor = m_display->textCursor();
 
-        // Ctrl+C
+        // Обработка Ctrl+C
         if ((keyEvent->key() == Qt::Key_C) && (keyEvent->modifiers() & Qt::ControlModifier)) {
             if (cursor.hasSelection()) {
-                return false; // Копируем, если выделено
+                return false; // Позволяем скопировать текст
             } else {
                 if (m_process->state() == QProcess::Running) {
 #ifdef Q_OS_WIN
@@ -98,6 +122,7 @@ bool TerminalWidget::eventFilter(QObject *obj, QEvent *event) {
             m_display->setTextCursor(cursor);
             return true;
         }
+
         bool isModifierOnly = (keyEvent->modifiers() != Qt::NoModifier && keyEvent->text().isEmpty());
         bool isNavigation = (keyEvent->key() == Qt::Key_Left || keyEvent->key() == Qt::Key_Right || 
                              keyEvent->key() == Qt::Key_Up || keyEvent->key() == Qt::Key_Down ||
