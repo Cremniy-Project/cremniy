@@ -82,7 +82,7 @@ jobs:
             --icon-file cremniy.png \
             --plugin qt \
             --output appimage
-          find . -maxdepth 1 -name "*.AppImage" ! -name "${{ matrix.artifact_name }}.AppImage" -exec mv {} ${{ matrix.artifact_name }}.AppImage \;
+          mv Cremniy-*.AppImage ${{ matrix.artifact_name }}.AppImage || mv cremniy-*.AppImage ${{ matrix.artifact_name }}.AppImage
 
       - name: Package (Windows)
         if: runner.os == 'Windows'
@@ -110,7 +110,7 @@ jobs:
             *.tar.gz
             *.zip
             *.AppImage
-          if-no-files-found: ignore
+          if-no-files-found: error
 
   release:
     name: Create Release
