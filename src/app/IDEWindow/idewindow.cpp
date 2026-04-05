@@ -1,5 +1,6 @@
 #include "idewindow.h"
 #include "dialogs/filecreatedialog.h"
+#include "widgets/filetab.h"
 #include "QFileSystemModel"
 #include "QMessageBox"
 #include <qheaderview.h>
@@ -108,6 +109,21 @@ IDEWindow::IDEWindow(QString ProjectPath, QWidget *parent)
 
 IDEWindow::~IDEWindow()
 {}
+
+FileTab* IDEWindow::currentFileTab() const
+{
+    return qobject_cast<FileTab*>(m_filesTabWidget->currentWidget());
+}
+
+bool IDEWindow::openToolForCurrentFile(const QString& toolId)
+{
+    FileTab* fileTab = currentFileTab();
+    if (!fileTab || !fileTab->toolsTabWidget()) {
+        return false;
+    }
+
+    return fileTab->toolsTabWidget()->openToolTab(toolId) != nullptr;
+}
 
 void IDEWindow::on_Toggle_Terminal(bool checked) {
     if (checked && !m_terminal) {

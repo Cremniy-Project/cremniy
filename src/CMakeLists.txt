@@ -124,12 +124,8 @@ add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/libs/cremniy-codeeditor ${CMAKE_BIN
 
 
 # - - Tool Tabs - -
-file(GLOB TOOLTAB_DIRS CONFIGURE_DEPENDS ToolTabs/*)
-foreach(dir ${TOOLTAB_DIRS})
-    if(IS_DIRECTORY ${dir})
-        add_subdirectory(${dir})
-    endif()
-endforeach()
+add_subdirectory(ToolTabs/always)
+add_subdirectory(ToolTabs/other)
 
 target_link_libraries(${PROJECT_NAME} PRIVATE 
     Qt${QT_VERSION_MAJOR}::Widgets

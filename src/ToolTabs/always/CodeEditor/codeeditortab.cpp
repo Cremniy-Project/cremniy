@@ -12,12 +12,8 @@
 #include <QStackedLayout>
 #include <QVBoxLayout>
 
-static bool registered = []() {
-    ToolTabFactory::instance().registerTab("1", [](FileDataBuffer* buffer) {
-        return new CodeEditorTab(buffer);
-    });
-    return true;
-}();
+static const bool registeredCodeEditorTab =
+    registerAlwaysToolTab<CodeEditorTab>(QStringLiteral("code"), QStringLiteral("Code"), ToolTabOrder::Code);
 
 CodeEditorTab::CodeEditorTab(FileDataBuffer* buffer, QWidget* parent)
     : ToolTab(buffer, parent)
