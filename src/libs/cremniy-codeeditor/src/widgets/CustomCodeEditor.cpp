@@ -1045,14 +1045,50 @@ bool CustomCodeEditor::findText(const QString& text, bool forward, Qt::CaseSensi
     return false;
 }
 
-bool CustomCodeEditor::goToLine(qint64 oneBasedLineNumber)
+bool CustomCodeEditor::goToLine(qint64 oneBasedLineNumber, bool selectWholeLine)
 {
     if (!m_buffer || m_lineIndex->lineCount() == 0)
         return false;
 
     const qint64 lineNum = qBound<qint64>(0, oneBasedLineNumber - 1, m_lineIndex->lineCount() - 1);
-    m_cursorBytePos = lineVisibleStart(lineNum);
-    clearSelection();
+    const qint64 lineStart = lineVisibleStart(lineNum);
+    if (selectWholeLine) {
+        const qint64 lineEnd = lineVisibleEnd(lineNum);
+        m_selectionStart = lineStart;
+        m_selectionLength = lineEnd - lineStart;
+        m_selectionAnchor = lineStart;
+        m_cursorBytePos = lineEnd;
+        syncSelectionToBuffer();
+    } else {
+        m_cursorBytePos = lineStart;
+        clearSelection();
+    }
+    ensureCursorVisible();
+    emit cursorPositionChanged();
+    viewport()->update();
+    return true;
+}
+
+bool CustomCodeEditor::revealSearchHit(qint64 oneBasedLineNumber, const QString& needle)
+{
+    if (!m_buffer || m_lineIndex->lineCount() == 0)
+        return false;
+    if (needle.isEmpty())
+        return goToLine(oneBasedLineNumber, false);
+
+    const qint64 lineNum = qBound<qint64>(0, oneBasedLineNumber - 1, m_lineIndex->lineCount() - 1);
+    const auto& layout = cachedLineLayout(lineNum);
+    const QString& lt = layout.displayText;
+    const int col = lt.indexOf(needle, 0, Qt::CaseInsensitive);
+    if (col < 0)
+        return goToLine(oneBasedLineNumber, false);
+
+    const int matchChars = needle.size();
+    m_selectionStart = bytePosForColumn(lineNum, col);
+    m_selectionLength = bytePosForColumn(lineNum, col + matchChars) - m_selectionStart;
+    m_selectionAnchor = m_selectionStart;
+    m_cursorBytePos = m_selectionStart + m_selectionLength;
+    syncSelectionToBuffer();
     ensureCursorVisible();
     emit cursorPositionChanged();
     viewport()->update();
@@ -1386,13 +1422,7 @@ void CustomCodeEditor::keyPressEvent(QKeyEvent* event)
         endEditGrouping();
         if (kLogInputEvents)
             qDebug() << "[CustomCodeEditor][keyPressEvent] action=InsertNewline";
-        if (shiftPressed) {
-            replaceRange(hasSelection() ? m_selectionStart : m_cursorBytePos,
-                         hasSelection() ? m_selectionLength : 0,
-                         QByteArray("\n"));
-        } else {
-            insertNewline();
-        }
+        insertNewline();
         event->accept();
         return;
     case Qt::Key_Tab:
@@ -1576,6 +1606,10 @@ void CustomCodeEditor::contextMenuEvent(QContextMenuEvent* event)
     QAction* deleteAction = menu.addAction(tr("Delete"));
     menu.addSeparator();
     QAction* selectAllAction = menu.addAction(tr("Select All"));
+    menu.addSeparator();
+    QAction* wordWrapAction = menu.addAction(tr("Word Wrap"));
+    wordWrapAction->setCheckable(true);
+    wordWrapAction->setChecked(m_wordWrapEnabled);
 
     const bool hasEditorSelection = hasSelection();
     const QMimeData* mimeData = QApplication::clipboard()->mimeData();
@@ -1604,6 +1638,8 @@ void CustomCodeEditor::contextMenuEvent(QContextMenuEvent* event)
         deleteForward();
     else if (chosen == selectAllAction)
         selectAll();
+    else if (chosen == wordWrapAction)
+        setWordWrapEnabled(wordWrapAction->isChecked());
 
     event->accept();
 }
@@ -2266,48 +2302,6 @@ void CustomCodeEditor::renderLine(QPainter* painter, qint64 lineNum, const QStri
     painter->restore();
 }
 
-qint64 CustomCodeEditor::lineFromBytePos(qint64 bytePos) const
-{
-    return m_lineIndex->lineFromBytePos(bytePos);
-}
-
-qint64 CustomCodeEditor::bytePosFromLine(qint64 lineNum) const
-{
-    return m_lineIndex->lineStartPos(lineNum);
-}
-
-qint64 CustomCodeEditor::bytePosFromPoint(const QPoint& point) const
-{
-    if (!m_buffer || m_lineIndex->lineCount() == 0)
-        return firstTextByte();
-
-    const int lineHeight = qRound(m_fontMetrics.height());
-    const int scrollY = verticalScrollBar()->value();
-    const int scrollX = horizontalScrollBar()->value();
-    const qint64 visualLine = qMax<qint64>(0, (point.y() + scrollY) / lineHeight);
-    const qint64 lineNum = logicalLineFromVisualLine(visualLine);
-    const auto& layout = cachedLineLayout(lineNum);
-    const QString& text = layout.displayText;
-    const auto& segments = layout.segments;
-    const qint64 segmentIndex = qBound<qint64>(0, visualLine - visualLineIndexForLogicalLine(lineNum), segments.size() - 1);
-    const auto& segment = segments[segmentIndex];
-    const int localX = qMax(0, point.x() + (m_wordWrapEnabled ? 0 : scrollX) - lineNumberAreaWidth() - kTextLeftPadding);
-
-    int bestColumn = segment.startColumn + segment.length;
-    int previousWidth = 0;
-    for (int column = 0; column <= segment.length; ++column) {
-        const int width = qRound(displayAdvanceForRange(lineNum, segment.startColumn, column));
-        const int snapThreshold = previousWidth + (width - previousWidth) / 2;
-        if (localX <= snapThreshold) {
-            bestColumn = segment.startColumn + qMax(0, column - 1);
-            break;
-        }
-        previousWidth = width;
-    }
-
-    return bytePosForColumn(lineNum, bestColumn);
-}
-
 qreal CustomCodeEditor::displayAdvanceForRange(qint64 lineNum, int startColumn, int length) const
 {
     if (length <= 0)
@@ -2365,6 +2359,47 @@ qreal CustomCodeEditor::displayAdvanceForRange(qint64 lineNum, int startColumn, 
     return advance;
 }
 
+qint64 CustomCodeEditor::lineFromBytePos(qint64 bytePos) const
+{
+    return m_lineIndex->lineFromBytePos(bytePos);
+}
+
+qint64 CustomCodeEditor::bytePosFromLine(qint64 lineNum) const
+{
+    return m_lineIndex->lineStartPos(lineNum);
+}
+
+qint64 CustomCodeEditor::bytePosFromPoint(const QPoint& point) const
+{
+    if (!m_buffer || m_lineIndex->lineCount() == 0)
+        return firstTextByte();
+
+    const int lineHeight = qRound(m_fontMetrics.height());
+    const int scrollY = verticalScrollBar()->value();
+    const int scrollX = horizontalScrollBar()->value();
+    const qint64 visualLine = qMax<qint64>(0, (point.y() + scrollY) / lineHeight);
+    const qint64 lineNum = logicalLineFromVisualLine(visualLine);
+    const auto& layout = cachedLineLayout(lineNum);
+    const auto& segments = layout.segments;
+    const qint64 segmentIndex = qBound<qint64>(0, visualLine - visualLineIndexForLogicalLine(lineNum), segments.size() - 1);
+    const auto& segment = segments[segmentIndex];
+    const int localX = qMax(0, point.x() + (m_wordWrapEnabled ? 0 : scrollX) - lineNumberAreaWidth() - kTextLeftPadding);
+
+    int bestColumn = segment.startColumn + segment.length;
+    int previousWidth = 0;
+    for (int column = 0; column <= segment.length; ++column) {
+        const int width = qRound(displayAdvanceForRange(lineNum, segment.startColumn, column));
+        const int snapThreshold = previousWidth + (width - previousWidth) / 2;
+        if (localX <= snapThreshold) {
+            bestColumn = segment.startColumn + qMax(0, column - 1);
+            break;
+        }
+        previousWidth = width;
+    }
+
+    return bytePosForColumn(lineNum, bestColumn);
+}
+
 void CustomCodeEditor::ensureCursorVisible()
 {
     if (!m_buffer)
@@ -2373,7 +2408,6 @@ void CustomCodeEditor::ensureCursorVisible()
     const qint64 cursorLine = lineFromBytePos(m_cursorBytePos);
     const int lineHeight = qRound(m_fontMetrics.height());
     const auto& layout = cachedLineLayout(cursorLine);
-    const QString& text = layout.displayText;
     const auto& segments = layout.segments;
     const qint64 column = columnForBytePos(cursorLine, m_cursorBytePos);
     int segmentIndex = 0;
@@ -2393,7 +2427,8 @@ void CustomCodeEditor::ensureCursorVisible()
         verticalScrollBar()->setValue(cursorY - viewportHeight + lineHeight);
 
     const int xPrefixColumn = static_cast<int>(column - segments[segmentIndex].startColumn);
-    const int cursorX = lineNumberAreaWidth() + kTextLeftPadding + qRound(displayAdvanceForRange(cursorLine, segments[segmentIndex].startColumn, xPrefixColumn));
+    const int cursorX = lineNumberAreaWidth() + kTextLeftPadding
+        + qRound(displayAdvanceForRange(cursorLine, segments[segmentIndex].startColumn, xPrefixColumn));
     const int scrollX = horizontalScrollBar()->value();
     const int viewportWidth = viewport()->width();
     if (m_wordWrapEnabled)
@@ -3039,7 +3074,8 @@ QPoint CustomCodeEditor::contentPointForBytePos(qint64 bytePos) const
 
     const int lineHeight = qRound(m_fontMetrics.height());
     const int xPrefixColumn = static_cast<int>(column - segments[segmentIndex].startColumn);
-    const int x = lineNumberAreaWidth() + kTextLeftPadding + qRound(displayAdvanceForRange(lineNum, segments[segmentIndex].startColumn, xPrefixColumn));
+    const int x = lineNumberAreaWidth() + kTextLeftPadding
+        + qRound(displayAdvanceForRange(lineNum, segments[segmentIndex].startColumn, xPrefixColumn));
     const int y = static_cast<int>(visualLineIndexForLogicalLine(lineNum) + segmentIndex) * lineHeight;
     return QPoint(x, y);
 }
@@ -3340,7 +3376,10 @@ void CustomCodeEditor::renderCursor(QPainter* painter)
     const int lineHeight = qRound(m_fontMetrics.height());
     const int scrollY = verticalScrollBar()->value();
     const int scrollX = horizontalScrollBar()->value();
-    const int x = lineNumberAreaWidth() + kTextLeftPadding + qRound(displayAdvanceForRange(cursorLine, segments[segmentIndex].startColumn, column - segments[segmentIndex].startColumn)) - (m_wordWrapEnabled ? 0 : scrollX);
+    const int x = lineNumberAreaWidth() + kTextLeftPadding
+        + qRound(displayAdvanceForRange(cursorLine, segments[segmentIndex].startColumn,
+                                        static_cast<int>(column - segments[segmentIndex].startColumn)))
+        - (m_wordWrapEnabled ? 0 : scrollX);
     const int y = static_cast<int>(visualLineIndexForLogicalLine(cursorLine) + segmentIndex) * lineHeight - scrollY;
     painter->setPen(QPen(palette().text().color(), 2));
     painter->drawLine(x, y, x, y + lineHeight);
@@ -3384,8 +3423,12 @@ void CustomCodeEditor::renderSelection(QPainter* painter)
 
             const int startColumn = columnForBytePos(lineNum, segmentRangeStart) - segments[segmentIndex].startColumn;
             const int endColumn = columnForBytePos(lineNum, segmentRangeEnd) - segments[segmentIndex].startColumn;
-            const int xStart = lineNumberAreaWidth() + kTextLeftPadding + qRound(displayAdvanceForRange(lineNum, segments[segmentIndex].startColumn, startColumn)) - (m_wordWrapEnabled ? 0 : scrollX);
-            const int xEnd = lineNumberAreaWidth() + kTextLeftPadding + qRound(displayAdvanceForRange(lineNum, segments[segmentIndex].startColumn, endColumn)) - (m_wordWrapEnabled ? 0 : scrollX);
+            const int xStart = lineNumberAreaWidth() + kTextLeftPadding
+                + qRound(displayAdvanceForRange(lineNum, segments[segmentIndex].startColumn, startColumn))
+                - (m_wordWrapEnabled ? 0 : scrollX);
+            const int xEnd = lineNumberAreaWidth() + kTextLeftPadding
+                + qRound(displayAdvanceForRange(lineNum, segments[segmentIndex].startColumn, endColumn))
+                - (m_wordWrapEnabled ? 0 : scrollX);
             const int y = static_cast<int>(baseVisualLine + segmentIndex) * lineHeight - scrollY;
             painter->fillRect(QRect(xStart, y, qMax(1, xEnd - xStart), lineHeight), selectionColor);
         }
@@ -3431,8 +3474,12 @@ void CustomCodeEditor::renderSelectionMatches(QPainter* painter)
 
                     const int startColumn = rangeStartColumn - segmentStartColumn;
                     const int endColumn = rangeEndColumn - segmentStartColumn;
-                    const int xStart = lineNumberAreaWidth() + kTextLeftPadding + qRound(displayAdvanceForRange(lineNum, segmentStartColumn, startColumn)) - (m_wordWrapEnabled ? 0 : scrollX);
-                    const int xEnd = lineNumberAreaWidth() + kTextLeftPadding + qRound(displayAdvanceForRange(lineNum, segmentStartColumn, endColumn)) - (m_wordWrapEnabled ? 0 : scrollX);
+                    const int xStart = lineNumberAreaWidth() + kTextLeftPadding
+                        + qRound(displayAdvanceForRange(lineNum, segmentStartColumn, startColumn))
+                        - (m_wordWrapEnabled ? 0 : scrollX);
+                    const int xEnd = lineNumberAreaWidth() + kTextLeftPadding
+                        + qRound(displayAdvanceForRange(lineNum, segmentStartColumn, endColumn))
+                        - (m_wordWrapEnabled ? 0 : scrollX);
                     const int y = static_cast<int>(baseVisualLine + segmentIndex) * lineHeight - scrollY;
                     painter->fillRect(QRect(xStart, y, qMax(1, xEnd - xStart), lineHeight), matchColor);
                 }

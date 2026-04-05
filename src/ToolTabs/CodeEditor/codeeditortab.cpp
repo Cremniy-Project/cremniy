@@ -6,9 +6,13 @@
 #include <QBoxLayout>
 #include <QFileInfo>
 #include <QInputDialog>
+#include <QtGlobal>
 #include <QLabel>
 #include <QLineEdit>
+#include <QHBoxLayout>
+#include <QKeySequence>
 #include <QPushButton>
+#include <QShortcut>
 #include <QStackedLayout>
 #include <QVBoxLayout>
 
@@ -93,9 +97,15 @@ CodeEditorTab::CodeEditorTab(FileDataBuffer* buffer, QWidget* parent)
     connect(m_searchPrevButton, &QPushButton::clicked, this, [this]() { findNext(false); });
     connect(m_searchNextButton, &QPushButton::clicked, this, [this]() { findNext(true); });
     connect(m_searchCloseButton, &QPushButton::clicked, this, &CodeEditorTab::closeSearchBar);
-    connect(m_matchCaseCheckBox, &QCheckBox::checkStateChanged, this, [this](int) {
+#if QT_VERSION >= QT_VERSION_CHECK(6, 7, 0)
+    connect(m_matchCaseCheckBox, &QCheckBox::checkStateChanged, this, [this](Qt::CheckState) {
         updateSearchUi();
     });
+#else
+    connect(m_matchCaseCheckBox, &QCheckBox::stateChanged, this, [this](int) {
+        updateSearchUi();
+    });
+#endif
 
     connect(m_codeEditorWidget, &CustomCodeEditor::contentsChanged, this, [this]() {
         if (m_dataBuffer->isModified()) {
@@ -258,4 +268,22 @@ void CodeEditorTab::saveTabData()
     setModifyIndicator(false);
     emit dataEqual();
     emit refreshDataAllTabsSignal();
+}
+
+void CodeEditorTab::goToLine(int lineNumber, bool selectWholeLine)
+{
+    if (lineNumber < 1)
+        return;
+    if (m_overlayWidget && !m_overlayWidget->isHidden())
+        return;
+    m_codeEditorWidget->goToLine(lineNumber, selectWholeLine);
+}
+
+void CodeEditorTab::goToSearchHit(int lineNumber, const QString &needle)
+{
+    if (lineNumber < 1)
+        return;
+    if (m_overlayWidget && !m_overlayWidget->isHidden())
+        return;
+    m_codeEditorWidget->revealSearchHit(lineNumber, needle);
 }

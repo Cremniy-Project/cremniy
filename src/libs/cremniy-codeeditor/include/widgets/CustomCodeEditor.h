@@ -63,7 +63,8 @@ public:
     QString selectedText() const;
     QString syntaxKey() const;
     bool findText(const QString& text, bool forward = true, Qt::CaseSensitivity caseSensitivity = Qt::CaseInsensitive);
-    bool goToLine(qint64 oneBasedLineNumber);
+    bool goToLine(qint64 oneBasedLineNumber, bool selectWholeLine = false);
+    bool revealSearchHit(qint64 oneBasedLineNumber, const QString& needle);
     int countMatches(const QString& text, Qt::CaseSensitivity caseSensitivity = Qt::CaseInsensitive) const;
     int currentMatchIndex(const QString& text, Qt::CaseSensitivity caseSensitivity = Qt::CaseInsensitive) const;
     
@@ -157,6 +158,8 @@ private:
     void renderVisibleLines(QPainter* painter);
     void renderLineNumber(QPainter* painter, qint64 lineNum, const QRectF& rect);
     void renderLine(QPainter* painter, qint64 lineNum, const QString& text, const QRectF& rect, int segmentStartColumn, int segmentLength);
+    /** Horizontal advance for displayText[segmentStartColumn : +prefixColumns] using the same fonts as renderLine. */
+    qreal displayAdvanceForRange(qint64 lineNum, int segmentStartColumn, int prefixColumns) const;
     void renderCursor(QPainter* painter);
     void renderSelection(QPainter* painter);
     void renderSelectionMatches(QPainter* painter);
@@ -208,7 +211,6 @@ private:
     QString lineCommentPrefix() const;
     QString highlightedSelectionText() const;
     QVector<QTextLayout::FormatRange> highlightFormatsForVisibleLine(qint64 lineNum, const QString& text) const;
-    qreal displayAdvanceForRange(qint64 lineNum, int startColumn, int length) const;
     void applyEditorPalette();
     void ensureLineIndexValid();
     qint64 clampToUtf8Boundary(qint64 bytePos) const;
