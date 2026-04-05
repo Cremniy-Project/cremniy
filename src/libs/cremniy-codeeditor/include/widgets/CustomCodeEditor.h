@@ -158,6 +158,8 @@ private:
     void renderVisibleLines(QPainter* painter);
     void renderLineNumber(QPainter* painter, qint64 lineNum, const QRectF& rect);
     void renderLine(QPainter* painter, qint64 lineNum, const QString& text, const QRectF& rect, int segmentStartColumn, int segmentLength);
+    /** Horizontal advance for displayText[segmentStartColumn : +prefixColumns] using the same fonts as renderLine. */
+    qreal displayAdvanceForRange(qint64 lineNum, int segmentStartColumn, int prefixColumns) const;
     void renderCursor(QPainter* painter);
     void renderSelection(QPainter* painter);
     void renderSelectionMatches(QPainter* painter);
