@@ -33,7 +33,7 @@ jobs:
         uses: jurplel/install-qt-action@v3
         with:
           version: '6.5.3'
-          cache: false
+          cache: true
 
       - name: Install Linux dependencies
         if: runner.os == 'Linux'
@@ -53,25 +53,29 @@ jobs:
         run: cmake -B build -S src -DCMAKE_BUILD_TYPE=Release
 
       - name: Build
-        run: cmake --build build --config Release
+        run: cmake --build build --config Release --parallel
 
       - name: Package (Linux) - tar.gz
         if: runner.os == 'Linux'
         run: |
           mkdir -p package
-          cp build/cremniy package/
+          cp build/cremniy package/ || cp build/Release/cremniy package/
           cd package
           tar -czf ../${{ matrix.artifact_name }}.tar.gz *
           
       - name: Package (Linux) - AppImage
         if: runner.os == 'Linux'
         run: |
+          echo -e "[Desktop Entry]\nType=Application\nName=Cremniy\nExec=cremniy\nIcon=cremniy\nCategories=Utility;" > cremniy.desktop
+        
           # Resize icon to 256x256 for AppImage compatibility
           convert src/resources/icons/icon.png -resize 256x256 cremniy.png
           
           export QML_SOURCES_PATHS=${{ github.workspace }}/src
           export QMAKE=$Qt6_DIR/bin/qmake
-          ./linuxdeploy-x86_64.AppImage \
+          export LD_LIBRARY_PATH=$Qt6_DIR/lib:$LD_LIBRARY_PATH
+          
+          ./linuxdeploy-x86_64.AppImage --appimage-extract-and-run \
             --appdir AppDir \
             --executable build/cremniy \
             --desktop-file cremniy.desktop \
@@ -82,10 +86,11 @@ jobs:
 
       - name: Package (Windows)
         if: runner.os == 'Windows'
+        shell: pwsh
         run: |
           New-Item -ItemType Directory -Path package -Force
           Copy-Item build/Release/cremniy.exe package/
-          windeployqt package/cremniy.exe
+          & "$env:Qt6_DIR/bin/windeployqt.exe" package/cremniy.exe
           Compress-Archive -Path package/* -DestinationPath ${{ matrix.artifact_name }}.zip
 
       - name: Package (macOS)
@@ -95,16 +100,17 @@ jobs:
           cp -r build/cremniy.app package/
           macdeployqt package/cremniy.app
           cd package
-          tar -czf ../${{ matrix.artifact_name }}.tar.gz *
+          tar -czf ../${{ matrix.artifact_name }}.tar.gz cremniy.app
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.artifact_name }}
           path: |
-            ${{ matrix.artifact_name }}.tar.gz
-            ${{ matrix.artifact_name }}.zip
-            ${{ matrix.artifact_name }}.AppImage
+            *.tar.gz
+            *.zip
+            *.AppImage
+          if-no-files-found: error
 
   release:
     name: Create Release
@@ -119,6 +125,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           path: artifacts
+          merge-multiple: true
 
       - name: Create Release
         uses: softprops/action-gh-release@v1
