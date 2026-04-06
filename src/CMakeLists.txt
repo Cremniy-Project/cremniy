@@ -48,6 +48,8 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
         dialogs/settingsdialog.h
         dialogs/reversecalculatordialog.cpp
         dialogs/reversecalculatordialog.h
+        dialogs/dataconverterdialog.cpp
+        dialogs/dataconverterdialog.h
         dialogs/projectsearchdialog.cpp
         dialogs/projectsearchdialog.h
         dialogs/projectsearchresultdelegate.cpp
@@ -140,7 +142,7 @@ add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/libs/cremniy-codeeditor ${CMAKE_BIN
 add_subdirectory(ToolTabs/always)
 add_subdirectory(ToolTabs/other)
 
-target_link_libraries(${PROJECT_NAME} PRIVATE 
+target_link_libraries(${PROJECT_NAME} PRIVATE
     Qt${QT_VERSION_MAJOR}::Widgets
     cremniy-codeeditor
 )
