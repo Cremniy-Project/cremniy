@@ -32,7 +32,6 @@ ToolsMenu::ToolsMenu() : BaseMenu("Tools") {
   }
 
   addAction(m_reverseCalculator);
-  addSeparator();
   addAction(m_dataConverter);
 }
 

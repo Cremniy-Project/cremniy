@@ -22,6 +22,7 @@ private slots:
 private:
     void updateOutputs(double bytes);
     void copyRow(int rowIndex);
+    void copyAll();
 
     static double toBytes(double value, int unitIndex);
     static double fromBytes(double bytes, int unitIndex);

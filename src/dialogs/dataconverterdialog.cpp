@@ -19,15 +19,15 @@ struct UnitInfo {
 
 static const UnitInfo kUnits[] = {
     { "Bits",      "Bit",    1.0 / 8.0 },
-    { "Bytes",     "Byte",    1.0 },
-    { "Kibibytes", "KiB",  1024.0 },
-    { "Mebibytes", "MiB",  1024.0 * 1024.0 },
-    { "Gibibytes", "GiB",  1024.0 * 1024.0 * 1024.0 },
-    { "Tebibytes", "TiB",  1024.0 * 1024.0 * 1024.0 * 1024.0 },
-    { "Pebibytes", "PiB",  1024.0 * 1024.0 * 1024.0 * 1024.0 * 1024.0 },
-    { "Exbibytes", "EiB",  1024.0 * 1024.0 * 1024.0 * 1024.0 * 1024.0 * 1024.0 },
-    { "Zebibytes", "ZiB",  1024.0 * 1024.0 * 1024.0 * 1024.0 * 1024.0 * 1024.0 * 1024.0 },
-    { "Yobibytes", "YiB",  1024.0 * 1024.0 * 1024.0 * 1024.0 * 1024.0 * 1024.0 * 1024.0 * 1024.0 },
+    { "Bytes",     "Byte",   1.0 },
+    { "Kilobytes", "KB",     1000.0 },
+    { "Megabytes", "MB",     1000.0 * 1000.0 },
+    { "Gigabytes", "GB",     1000.0 * 1000.0 * 1000.0 },
+    { "Terabytes", "TB",     1000.0 * 1000.0 * 1000.0 * 1000.0 },
+    { "Petabytes", "PB",     1000.0 * 1000.0 * 1000.0 * 1000.0 * 1000.0 },
+    { "Exabytes",  "EB",     1000.0 * 1000.0 * 1000.0 * 1000.0 * 1000.0 * 1000.0 },
+    { "Zettabytes","ZB",     1000.0 * 1000.0 * 1000.0 * 1000.0 * 1000.0 * 1000.0 * 1000.0 },
+    { "Yottabytes","YB",     1000.0 * 1000.0 * 1000.0 * 1000.0 * 1000.0 * 1000.0 * 1000.0 * 1000.0 },
 };
 
 static constexpr int kUnitCount = 10;
@@ -45,7 +45,17 @@ double DataConverterDialog::fromBytes(double bytes, int unitIndex)
 
 QString DataConverterDialog::formatValue(double value)
 {
-    QString s = QString::number(value, 'g', 10);
+    if (value == 0) return "0";
+
+    if (std::abs(value) < 0.000001) {
+        return QString::number(value, 'g', 6);
+    }
+
+    QString s = QString::number(value, 'f', 10);
+    if (s.contains('.')) {
+        while (s.endsWith('0')) s.chop(1);
+        if (s.endsWith('.')) s.chop(1);
+    }
     return s;
 }
 
@@ -128,11 +138,13 @@ DataConverterDialog::DataConverterDialog(QWidget* parent)
     }
 
     root->addLayout(m_form);
+    auto* copyAllButton = new QPushButton(tr("Copy All"), this);
+    copyAllButton->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
+    root->addWidget(copyAllButton);
+    connect(copyAllButton, &QPushButton::clicked, this, &DataConverterDialog::copyAll);
 
-    connect(m_input, &QLineEdit::textChanged,
-        this, &DataConverterDialog::onInputChanged);
-    connect(m_sourceUnit, QOverload<int>::of(&QComboBox::currentIndexChanged),
-        this, &DataConverterDialog::onSourceUnitChanged);
+    connect(m_input, &QLineEdit::textChanged, this, &DataConverterDialog::onInputChanged);
+    connect(m_sourceUnit, QOverload<int>::of(&QComboBox::currentIndexChanged), this, &DataConverterDialog::onSourceUnitChanged);
 
     onInputChanged();
 }
@@ -179,4 +191,18 @@ void DataConverterDialog::copyRow(int rowIndex)
     const QString text = m_labels[rowIndex]->text();
     if (text != "-")
         QGuiApplication::clipboard()->setText(text);
+}
+
+void DataConverterDialog::copyAll()
+{
+    QStringList result;
+    for (int i = 0; i < kUnitCount; ++i) {
+        const QString val = m_labels[i]->text();
+        if (val != "-") {
+            result << QString("%1: %2").arg(tr(kUnits[i].label), val);
+        }
+    }
+
+    if (!result.isEmpty())
+        QGuiApplication::clipboard()->setText(result.join("\n"));
 }
