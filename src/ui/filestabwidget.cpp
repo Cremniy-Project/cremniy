@@ -139,6 +139,8 @@ void FilesTabWidget::closeTab(int index) {
             break;
         case QMessageBox::Cancel:
             return;
+        default:
+            break;
         }
     }
 
