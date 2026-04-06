@@ -902,6 +902,8 @@ void CustomCodeEditor::setTabDisplaySize(int spaces)
         return;
 
     m_tabDisplaySize = newSize;
+    if (!m_tabReplace)
+        m_tabReplaceSize = newSize;
     invalidateDisplayLayoutCache();
     invalidateWrapCache();
     updateScrollbars();
@@ -2788,7 +2790,20 @@ void CustomCodeEditor::insertTab()
         return;
     }
 
-    replaceRange(m_cursorBytePos, 0, m_tabReplace ? QByteArray(m_tabReplaceSize, ' ') : QByteArray("\t"));
+    const QByteArray indent = m_tabReplace ? QByteArray(m_tabReplaceSize, ' ') : QByteArray("\t");
+    const qint64 insertPos = m_cursorBytePos;
+    replaceRange(insertPos, 0, indent);
+
+    // Keep the caret on the newly inserted indentation even if buffer signals
+    // briefly bounce selection/cursor state through sibling tool views.
+    m_cursorBytePos = insertPos + indent.size();
+    m_selectionStart = m_cursorBytePos;
+    m_selectionLength = 0;
+    m_selectionAnchor = -1;
+    syncSelectionToBuffer();
+    ensureCursorVisible();
+    emit cursorPositionChanged();
+    viewport()->update();
 }
 
 void CustomCodeEditor::outdentSelection()

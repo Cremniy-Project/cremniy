@@ -3,7 +3,10 @@
 
 #include "ui/MenuBar/basemenu.h"
 
+#include <QList>
+
 class IDEWindow;
+class QAction;
 
 class ToolsMenu : public BaseMenu
 {
@@ -11,6 +14,7 @@ class ToolsMenu : public BaseMenu
 private:
     QAction* m_reverseCalculator;
     IDEWindow* m_ideWindow = nullptr;
+    QList<QAction*> m_toolTabActions;
 public:
     ToolsMenu();
     void setupConnections(IDEWindow* ideWind);

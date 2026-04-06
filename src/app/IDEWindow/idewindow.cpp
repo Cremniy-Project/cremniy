@@ -1,6 +1,7 @@
 #include "idewindow.h"
 #include "dialogs/projectsearchdialog.h"
 #include "dialogs/filecreatedialog.h"
+#include "widgets/filetab.h"
 #include "QFileSystemModel"
 #include "QMessageBox"
 #include <QDir>
@@ -127,6 +128,21 @@ IDEWindow::IDEWindow(QString ProjectPath, QWidget *parent)
 IDEWindow::~IDEWindow()
 {}
 
+FileTab* IDEWindow::currentFileTab() const
+{
+    return qobject_cast<FileTab*>(m_filesTabWidget->currentWidget());
+}
+
+bool IDEWindow::openToolForCurrentFile(const QString& toolId)
+{
+    FileTab* fileTab = currentFileTab();
+    if (!fileTab || !fileTab->toolsTabWidget()) {
+        return false;
+    }
+
+    return fileTab->toolsTabWidget()->openToolTab(toolId) != nullptr;
+}
+
 void IDEWindow::on_Toggle_Terminal(bool checked) {
     if (checked && !m_terminal) {
         m_terminal = new TerminalWidget(this, m_projectPath);
@@ -167,8 +183,10 @@ void IDEWindow::on_SetTabWidth(int width)
 {
     const auto editors = findChildren<CustomCodeEditor*>();
     for (CustomCodeEditor* editor : editors) {
-        if (editor)
+        if (editor) {
             editor->setTabDisplaySize(width);
+            editor->setTabReplaceSize(width);
+        }
     }
 }
 
