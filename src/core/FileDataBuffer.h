@@ -104,8 +104,9 @@ private:
     int m_maxCachedChunks = kDefaultMaxCachedChunks;
     bool m_fileBacked = false;
     bool m_materialized = true;
+    mutable std::list<qint64> m_chunkLruList;
+    mutable QHash<qint64, std::list<qint64>::iterator> m_chunkLruIter;
     mutable QHash<qint64, QByteArray> m_chunkCache;
-    mutable QList<qint64> m_chunkLru;
     QMap<qint64, char> m_overrides;
     QByteArray m_data;
     uint m_originalHash = 0;
