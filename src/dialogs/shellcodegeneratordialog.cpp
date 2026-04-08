@@ -39,7 +39,7 @@ struct StyleEntry {
 static const StyleEntry kStyles[] = {
     {"C", 0},
     {"C++", 1},
-    {"Raw hex", 2},
+    {"RAW", 2},
 };
 static constexpr int kStyleCount = std::size(kStyles);
 
