@@ -258,6 +258,7 @@ DisassemblerTab::DisassemblerTab(FileDataBuffer* buffer, QWidget *parent)
             // this, &DisassemblerTab::onGlobalActionTriggered);
 
     updateBackendUiHint();
+    updateStatusState();
 }
 
 DisassemblerTab::~DisassemblerTab()
@@ -269,6 +270,7 @@ DisassemblerTab::~DisassemblerTab()
 
 void DisassemblerTab::setFile(QString filepath){
     m_fileContext = new FileContext(filepath);
+    updateStatusState();
 }
 
 void DisassemblerTab::setTabData()
@@ -328,6 +330,7 @@ void DisassemblerTab::onSelectionChanged(qint64 pos, qint64 length)
     }
 
     m_updatingSelection = false;
+    updateStatusState();
 }
 
 void DisassemblerTab::onDataChanged()
@@ -482,6 +485,7 @@ void DisassemblerTab::setupUi()
     m_disasmView->viewport()->installEventFilter(this);
     m_disasmHighlighter = new DisasmTextHighlighter(m_disasmView->document());
     connect(m_disasmView, &QPlainTextEdit::cursorPositionChanged, this, [this]() {
+        updateStatusState();
         if (!m_disasmView || !m_disasmView->hasFocus())
             return;
         const QPoint p = m_disasmView->cursorRect().bottomRight();
@@ -490,6 +494,7 @@ void DisassemblerTab::setupUi()
 
     // Обработчик выделения в дизассемблере - уведомляем буфер
     connect(m_disasmView, &QPlainTextEdit::selectionChanged, this, [this]() {
+        updateStatusState();
         if (m_updatingSelection) return; // Предотвращаем рекурсию
         
         QTextCursor cursor = m_disasmView->textCursor();
@@ -837,6 +842,67 @@ void DisassemblerTab::showInstructionHelpAt(const QPoint &pos, bool forceByCurso
     QToolTip::showText(globalPos, tip, m_disasmView->viewport());
 }
 
+const DisassemblerTab::LineInfo *DisassemblerTab::currentLineInfo(int *visibleLine) const
+{
+    if (!m_disasmView)
+        return nullptr;
+
+    const int currentVisibleLine = m_disasmView->textCursor().blockNumber();
+    if (visibleLine)
+        *visibleLine = currentVisibleLine;
+
+    if (currentVisibleLine < 0 || currentVisibleLine >= m_visibleLineMap.size())
+        return nullptr;
+
+    const int lineIndex = m_visibleLineMap[currentVisibleLine];
+    if (lineIndex < 0 || lineIndex >= m_lines.size())
+        return nullptr;
+
+    return &m_lines[lineIndex];
+}
+
+int DisassemblerTab::currentInstructionOrdinal(int visibleLine) const
+{
+    if (visibleLine < 0 || visibleLine >= m_visibleLineMap.size())
+        return 0;
+
+    int ordinal = 0;
+    for (int i = 0; i <= visibleLine; ++i) {
+        const int lineIndex = m_visibleLineMap[i];
+        if (lineIndex >= 0 && lineIndex < m_lines.size())
+            ++ordinal;
+    }
+
+    return ordinal;
+}
+
+void DisassemblerTab::updateStatusState()
+{
+    if (m_running) {
+        setStatusState({"Disassembling…", "", "Disassembler"});
+        return;
+    }
+
+    int visibleLine = -1;
+    const LineInfo *lineInfo = currentLineInfo(&visibleLine);
+    if (!lineInfo) {
+        setStatusState({"No instruction selected", "", "Disassembler"});
+        return;
+    }
+
+    const QString address = lineInfo->address.trimmed().isEmpty()
+        ? QStringLiteral("Unknown")
+        : lineInfo->address.trimmed();
+
+    const int instructionIndex = currentInstructionOrdinal(visibleLine);
+
+    setStatusState({
+        QString("Address %1").arg(address),
+        instructionIndex > 0 ? QString("Instruction %1").arg(instructionIndex) : QString(),
+        "Disassembler"
+    });
+}
+
 void DisassemblerTab::updateBackendUiHint()
 {
     if (m_running) return;
@@ -911,6 +977,7 @@ void DisassemblerTab::startDisassembly()
 
     setRunningState(true);
     showPlaceholder(tr("Disassembling…"));
+    updateStatusState();
 
     emit requestDisassembly(m_fileContext->filePath(), {});
 }
@@ -974,6 +1041,7 @@ void DisassemblerTab::onSectionFound(const DisasmSection &section)
     for (const auto &s : m_sections) total += s.instructions.size();
     m_statusLabel->setText(
         tr("%1 section(s) · %2 instructions loaded…").arg(m_sections.size()).arg(total));
+    updateStatusState();
 }
 
 void DisassemblerTab::onFunctionsFound(const QVector<DisasmFunction> &funcs)
@@ -1080,10 +1148,12 @@ void DisassemblerTab::jumpToAddress(const QString &addr)
             sel.cursor = cursor;
             extra.append(sel);
             m_disasmView->setExtraSelections(extra);
+            updateStatusState();
         }
     } else {
         // Если адрес не найден (например, он в другой секции, которая сейчас скрыта фильтром)
         m_statusLabel->setText(tr("Address %1 is not visible in current view").arg(addr));
+        updateStatusState();
     }
 }
 
@@ -1100,6 +1170,7 @@ void DisassemblerTab::onWorkerFinished()
                "Make sure the file is a supported binary (ELF, PE, Mach-O…)\n"
                "Check the Log panel for details."));
         m_statusLabel->clear();
+        updateStatusState();
         return;
     }
 
@@ -1114,6 +1185,8 @@ void DisassemblerTab::onWorkerFinished()
     // If backend didn't provide functions (objdump), derive from labels.
     if (m_functions.isEmpty())
         rebuildFunctionsFromLines();
+
+    updateStatusState();
 }
 
 void DisassemblerTab::onWorkerError(const QString &msg)
@@ -1123,6 +1196,7 @@ void DisassemblerTab::onWorkerError(const QString &msg)
     appendLog("[ERROR] " + msg);
     showPlaceholder(tr("objdump error — see Log panel for details"));
     m_statusLabel->setText(tr("Error"));
+    updateStatusState();
 }
 
 void DisassemblerTab::onProgressUpdated(int percent)
@@ -1142,6 +1216,7 @@ void DisassemblerTab::showPlaceholder(const QString &msg)
 {
     m_placeholderLbl->setText(msg);
     m_stack->setCurrentWidget(m_placeholderLbl);
+    updateStatusState();
 }
 
 void DisassemblerTab::populateSectionCombo()
@@ -1260,6 +1335,7 @@ void DisassemblerTab::applyFilter()
     }
     
     m_statusLabel->setText(tr("%1 lines shown").arg(shownLines));
+    updateStatusState();
 }
 
 #include "moc_disassemblertab.cpp"

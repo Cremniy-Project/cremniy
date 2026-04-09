@@ -99,6 +99,9 @@ private:
     void rebuildFunctionsFromLines();          // objdump labels
     void setFunctionsList(const QVector<DisasmFunction> &funcs);
     void jumpToAddress(const QString &addr);
+    const LineInfo *currentLineInfo(int *visibleLine = nullptr) const;
+    int currentInstructionOrdinal(int visibleLine) const;
+    void updateStatusState();
     QString autoCommentForLine(const LineInfo &li) const;
     bool tryResolveStringRefAddr(const LineInfo &li, quint64 *outAddr) const;
 
