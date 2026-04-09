@@ -1,5 +1,4 @@
-#include "asciicharsref.h"
-#include "ui/MenuBar/Menus/References/referencewindowfactory.h"
+#include "core/ToolsRegistry.h"
 #include <qboxlayout.h>
 #include <qclipboard.h>
 #include <qguiapplication.h>
@@ -12,9 +11,13 @@
 #include <QRegularExpressionValidator>
 
 static bool registered = []() {
-    ReferenceWindowFactory::instance().registerRefWin("1", []() { return new AsciiCharsRef(); });
+    ToolsRegistry::instance().registerWindowTool("ascii_chars", "ASCII / Unicode Characters", [](QWidget* parent) {
+        auto* win = new AsciiCharsRef();
+        win->setAttribute(Qt::WA_DeleteOnClose);
+        win->show();
+    });
     return true;
-    }();
+}();
 
 AsciiCharsRef::AsciiCharsRef()
 {

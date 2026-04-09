@@ -13,6 +13,14 @@ enum class ToolTabGroup {
     Other
 };
 
+<<<<<<< HEAD
+=======
+namespace ToolTabOrder {
+inline constexpr int Code = 100;
+inline constexpr int Binary = 200;
+}
+
+>>>>>>> 6bd6db6 (arch: file structure)
 class ToolTabFactory {
 
 public:

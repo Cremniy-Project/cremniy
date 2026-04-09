@@ -9,6 +9,10 @@ class ReferencesMenu : public BaseMenu
 
 public:
     ReferencesMenu();
+    void setupConnections(class IDEWindow* ideWind) override;
+
+private:
+    QList<class QAction*> m_toolActions;
 
 };
 

@@ -1,4 +1,6 @@
+#include "toolsmenu.h"
 #include "core/ToolsRegistry.h"
+#include "core/settings/exclusionfilterproxymodel.h"
 #include "ui/MenuBar/menufactory.h"
 #include <QKeySequence>
 #include <QAction>

@@ -1,6 +1,10 @@
 #include "codeeditortab.h"
 #include "core/ToolsRegistry.h"
+<<<<<<< HEAD
 #include "utils.h"
+=======
+#include "utils/utils.h"
+>>>>>>> 6bd6db6 (arch: file structure)
 #include "libs/CodeEditor/include/widgets/CustomCodeEditor.h"
 
 #include <QBoxLayout>

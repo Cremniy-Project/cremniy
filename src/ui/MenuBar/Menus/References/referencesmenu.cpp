@@ -1,6 +1,7 @@
 #include "referencesmenu.h"
 #include "ui/MenuBar/menufactory.h"
-#include "ui/MenuBar/Menus/References/referencewindowfactory.h"
+#include "core/ToolsRegistry.h"
+#include <QAction>
 
 static bool registered = [](){
     MenuFactory::instance().registerMenu("6", [](){
@@ -10,13 +11,19 @@ static bool registered = [](){
 }();
 
 ReferencesMenu::ReferencesMenu() : BaseMenu("References") {
-    auto& RefWinFactory = ReferenceWindowFactory::instance();
-    qDebug() << RefWinFactory.availableRefWins();
-    for (const QString& RefWinID : RefWinFactory.availableRefWins()){
-        ReferenceWindow* refWin = RefWinFactory.create(RefWinID);
-        QAction* act = new QAction(refWin->RefWinName(), this);
+    const auto descriptors = ToolsRegistry::instance().availableWindowTools();
+    for (const auto& descriptor : descriptors){
+        QAction* act = new QAction(descriptor.name, this);
+        act->setProperty("toolId", descriptor.id);
         this->addAction(act);
-        connect(act, &QAction::triggered, refWin, &ReferenceWindow::showWindow);
+        m_toolActions.append(act);
     }
+}
 
+void ReferencesMenu::setupConnections(IDEWindow* ideWind) {
+    for (QAction* action : m_toolActions) {
+        connect(action, &QAction::triggered, this, [action, ideWind]() {
+            ToolsRegistry::instance().openWindowTool(action->property("toolId").toString(), (QWidget*)ideWind);
+        });
+    }
 }
