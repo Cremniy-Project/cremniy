@@ -49,6 +49,7 @@ private:
     void openFindDialog();
     void findNext(bool forward = true);
     void openGoToLineDialog();
+    void updateStatusState();
     void updateSearchUi();
     void closeSearchBar();
 

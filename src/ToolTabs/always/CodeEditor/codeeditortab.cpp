@@ -5,6 +5,7 @@
 #include <QBoxLayout>
 #include <QFileInfo>
 #include <QInputDialog>
+#include <QKeySequence>
 #include <QLabel>
 #include <QLineEdit>
 #include <QPushButton>
@@ -111,6 +112,8 @@ CodeEditorTab::CodeEditorTab(FileDataBuffer* buffer, QWidget* parent)
             emit dataEqual();
     });
 
+    connect(m_codeEditorWidget, &CustomCodeEditor::cursorPositionChanged, this, &CodeEditorTab::updateStatusState);
+
     m_findShortcut = new QShortcut(QKeySequence::Find, this);
     m_findNextShortcut = new QShortcut(QKeySequence(Qt::Key_F3), this);
     m_findPreviousShortcut = new QShortcut(QKeySequence(Qt::SHIFT | Qt::Key_F3), this);
@@ -120,6 +123,8 @@ CodeEditorTab::CodeEditorTab(FileDataBuffer* buffer, QWidget* parent)
     connect(m_findNextShortcut, &QShortcut::activated, this, [this]() { findNext(true); });
     connect(m_findPreviousShortcut, &QShortcut::activated, this, [this]() { findNext(false); });
     connect(m_goToLineShortcut, &QShortcut::activated, this, &CodeEditorTab::openGoToLineDialog);
+
+    updateStatusState();
 }
 
 void CodeEditorTab::openFindDialog()
@@ -175,12 +180,14 @@ void CodeEditorTab::closeSearchBar()
 {
     m_searchBar->hide();
     m_codeEditorWidget->setFocus();
+    updateStatusState();
 }
 
 void CodeEditorTab::setFile(QString filepath)
 {
     m_fileContext = new FileContext(filepath);
     m_codeEditorWidget->setFileExt(CustomCodeEditor::syntaxKeyForPath(filepath));
+    updateStatusState();
 }
 
 void CodeEditorTab::setTabData()
@@ -222,6 +229,8 @@ void CodeEditorTab::setTabData()
         emit dataEqual();
         qDebug() << "CodeEditorTab::setTabData dataEqual returned this=" << this;
     }
+
+    updateStatusState();
 }
 
 void CodeEditorTab::onDataChanged()
@@ -241,6 +250,26 @@ void CodeEditorTab::onSelectionChanged(qint64 pos, qint64 length)
     Q_UNUSED(length);
     if (m_updatingSelection)
         return;
+}
+
+void CodeEditorTab::updateStatusState()
+{
+    if (!m_overlayWidget->isHidden()) {
+        setStatusState({"Binary file detected", "", m_codeEditorWidget->syntaxKey().toUpper()});
+        return;
+    }
+
+    const qint64 line = m_codeEditorWidget->cursorLineNumber();
+    const qint64 column = m_codeEditorWidget->cursorColumnNumber();
+    const QString syntax = m_codeEditorWidget->syntaxKey().isEmpty()
+        ? QStringLiteral("TEXT")
+        : m_codeEditorWidget->syntaxKey().toUpper();
+
+    setStatusState({
+        QString("Line %1").arg(line),
+        QString("Column %1").arg(column),
+        syntax
+    });
 }
 
 void CodeEditorTab::saveTabData()
