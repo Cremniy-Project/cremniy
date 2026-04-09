@@ -22,11 +22,19 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Install Qt
+      - name: Install Qt (Windows)
+        if: runner.os == 'Windows'
         uses: jurplel/install-qt-action@v3
         with:
-          version: '6.8.2'
+          version: '6.8.7'
           arch: 'win64_msvc2022_64'
+          cache: true
+      
+      - name: Install Qt (Linux/macOS)
+        if: runner.os != 'Windows'
+        uses: jurplel/install-qt-action@v3
+        with:
+          version: '6.8.7'
           cache: true
 
       - name: Install Linux dependencies
@@ -36,7 +44,12 @@ jobs:
           sudo apt-get install -y libgl1-mesa-dev libxkbcommon-x11-0 libxcb-icccm4 libxcb-image0 libxcb-keysyms1 libxcb-render-util0 libxcb-xinerama0 libxcb-cursor0
 
       - name: Configure CMake
-        run: cmake -B build -S src -DCMAKE_BUILD_TYPE=Release
+        run: |
+          if [[ "$RUNNER_OS" == "Windows" ]]; then
+            cmake -B build -S src -DCMAKE_BUILD_TYPE=Release -G "Visual Studio 17 2022"
+          else
+            cmake -B build -S src -DCMAKE_BUILD_TYPE=Release
+          fi
 
       - name: Build
         run: cmake --build build --config Release --parallel
