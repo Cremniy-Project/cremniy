@@ -34,13 +34,13 @@ Create a **unified tool for system programming** that eliminates the need for sc
 - [ ] 🟡 [Build and run user project](https://github.com/Cremniy-Project/cremniy/issues/6)
 - [ ] 🟢 [Add multilingual support](https://github.com/Cremniy-Project/cremniy/issues/67)
 - [ ] 🟢 [Search string across all project files](https://github.com/Cremniy-Project/cremniy/issues/76)
-- [ ] 🟢 [Move files between directories in QTreeView](https://github.com/Cremniy-Project/cremniy/issues/77)
 - [ ] 🟢 [Git integration](https://github.com/Cremniy-Project/cremniy/issues/42)
 - [x] 🔴 [Implement custom QPlainText for Code Editor](https://github.com/Cremniy-Project/cremniy/issues/56)
 - [x] 🔴 [Optimize data storage in QHexView](https://github.com/Cremniy-Project/cremniy/issues/57)
 - [x] 🟡 [Improve Disassembler design](https://github.com/Cremniy-Project/cremniy/issues/55)
 - [x] 🟡 [Add a data storage unit converter](https://github.com/munirov/cremniy/issues/104)
 - [x] 🟢 [Pin file tabs (FileTab)](https://github.com/Cremniy-Project/cremniy/issues/75)
+- [x] 🟢 [Move files between directories in QTreeView](https://github.com/Cremniy-Project/cremniy/issues/77)
 
 ## 🕓 Long-Term Tasks
 

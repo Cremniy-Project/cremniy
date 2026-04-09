@@ -53,10 +53,12 @@ All other branches (`feature/...`, `fix/...`) are created **in your fork** when 
 ### Submission
 
 1. Fork the repository
-2. Create a new branch
+2. Create a new branch from the appropriate base branch:
+   - `dev` for new features
+   - `main` for bug fixes
 3. Make your changes
-4. Sync your branch with the main `main` branch and resolve conflicts if any
-5. Create a pull request with a clear description
+4. Sync your branch with the base branch (`dev` or `main`) and resolve any conflicts
+5. Open a pull request to the appropriate branch (`dev` or `main`) with a clear description or a linked Issue
 
 ### Linking PR to tasks
 

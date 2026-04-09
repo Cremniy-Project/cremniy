@@ -19,20 +19,29 @@ jobs:
         os: [ubuntu-latest, windows-latest, macos-latest]
         include:
           - os: ubuntu-latest
-            artifact_name: cremniy-linux
+            artifact_name: cremniy-linux-${{ github.ref_name }}
           - os: windows-latest
-            artifact_name: cremniy-windows
+            artifact_name: cremniy-windows-${{ github.ref_name }}
           - os: macos-latest
-            artifact_name: cremniy-macos
+            artifact_name: cremniy-macos-${{ github.ref_name }}
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Install Qt
+      - name: Install Qt (Windows)
+        if: runner.os == 'Windows'
         uses: jurplel/install-qt-action@v3
         with:
-          version: '6.5.3'
+          version: '6.8.3'
+          arch: 'win64_msvc2022_64'
+          cache: true
+      
+      - name: Install Qt (Linux/macOS)
+        if: runner.os != 'Windows'
+        uses: jurplel/install-qt-action@v3
+        with:
+          version: '6.8.3'
           cache: true
 
       - name: Install Linux dependencies
@@ -49,19 +58,17 @@ jobs:
           chmod +x linuxdeploy-x86_64.AppImage
           chmod +x linuxdeploy-plugin-qt-x86_64.AppImage
 
-      - name: Configure CMake
+      - name: Configure CMake (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: cmake -B build -S src -DCMAKE_BUILD_TYPE=Release -G "Visual Studio 17 2022"
+      
+      - name: Configure CMake (Linux/macOS)
+        if: runner.os != 'Windows'
         run: cmake -B build -S src -DCMAKE_BUILD_TYPE=Release
 
       - name: Build
         run: cmake --build build --config Release --parallel
-
-      - name: Package (Linux) - tar.gz
-        if: runner.os == 'Linux'
-        run: |
-          mkdir -p package
-          cp build/cremniy package/ || cp build/Release/cremniy package/
-          cd package
-          tar -czf ../${{ matrix.artifact_name }}.tar.gz *
 
       - name: Package (Linux) - AppImage
         if: runner.os == 'Linux'

@@ -1,19 +1,6 @@
-cmake_minimum_required(VERSION 3.13)
-
 project(QHexView)
 
-option(QHEXVIEW_USE_QT5 "Enable Qt5 build" OFF)
 option(QHEXVIEW_ENABLE_DIALOGS "BuiltIn dialogs" ON)
-
-if(QHEXVIEW_USE_QT5)
-    find_package(Qt5 REQUIRED COMPONENTS Widgets)
-else()
-    find_package(Qt6 COMPONENTS Widgets)
-
-    if(NOT Qt6_FOUND)
-        find_package(Qt5 REQUIRED COMPONENTS Widgets)
-    endif()
-endif()
 
 add_library(${PROJECT_NAME} STATIC)
 
@@ -24,11 +11,7 @@ set_target_properties(${PROJECT_NAME}
         AUTOMOC ON
 )
 
-target_link_libraries(${PROJECT_NAME}
-    PUBLIC
-        Qt::Widgets
-        cremniy-codeeditor
-)
+target_link_libraries(${PROJECT_NAME} PUBLIC Qt6::Widgets)
 
 target_sources(${PROJECT_NAME}
     PRIVATE 

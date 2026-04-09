@@ -34,13 +34,13 @@
 - [ ] 🟡 [Сборка и запуск проекта пользователя](https://github.com/Cremniy-Project/cremniy/issues/6)
 - [ ] 🟢 [Добавить многоязычность](https://github.com/Cremniy-Project/cremniy/issues/67)
 - [ ] 🟢 [Поиск строки по всем файлам проекта](https://github.com/Cremniy-Project/cremniy/issues/76)
-- [ ] 🟢 [Перемещение файлов по директориям в QTreeView](https://github.com/Cremniy-Project/cremniy/issues/77)
 - [ ] 🟢 [Работа с Git](https://github.com/Cremniy-Project/cremniy/issues/42)
 - [x] 🔴 [Реализация кастомного QPlainText для Code Editor](https://github.com/Cremniy-Project/cremniy/issues/56)
 - [x] 🔴 [Оптимизировать хранение данных у QHexView](https://github.com/Cremniy-Project/cremniy/issues/57)
 - [x] 🟡 [Улучшение дизайна Disassembler](https://github.com/Cremniy-Project/cremniy/issues/55)
 - [x] 🟡 [Добавить конвертер единиц хранения данных](https://github.com/munirov/cremniy/issues/104)
 - [x] 🟢 [Закрепление вкладки файла (FileTab)](https://github.com/Cremniy-Project/cremniy/issues/75)
+- [x] 🟢 [Перемещение файлов по директориям в QTreeView](https://github.com/Cremniy-Project/cremniy/issues/77)
 
 ## 🕓 Долгосрочные задачи
 
