@@ -9,10 +9,10 @@
 #include "filemanager.h"
 #include "formatpagefactory.h"
 #include "formatpage.h"
-#include "core/ToolTabFactory.h"
+#include "core/ToolsRegistry.h"
 
 static const bool registeredBinaryTab =
-    registerAlwaysToolTab<BinaryTab>(QStringLiteral("binary"), QStringLiteral("Binary"), ToolTabOrder::Binary);
+    registerAlwaysFileTool<BinaryTab>(QStringLiteral("binary"), QStringLiteral("Binary"), FileToolOrder::Binary);
 
 namespace {
 void syncCurrentFormatPage(QStackedWidget* pageView, FileDataBuffer* dataBuffer)

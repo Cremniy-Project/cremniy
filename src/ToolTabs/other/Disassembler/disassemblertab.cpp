@@ -32,10 +32,10 @@
 #include "utils/appsettings.h"
 #include "utils/instructionhelpservice.h"
 #include "disasm/disasmtexthighlighter.h"
-#include "core/ToolTabFactory.h"
+#include "core/ToolsRegistry.h"
 
 static const bool registeredDisassemblerTab =
-    registerOtherToolTab<DisassemblerTab>(QStringLiteral("disassembler"), QStringLiteral("Disassembler"));
+    registerOtherFileTool<DisassemblerTab>(QStringLiteral("disassembler"), QStringLiteral("Disassembler"));
 
 static QString normalizeBytes(const QString &bytes)
 {

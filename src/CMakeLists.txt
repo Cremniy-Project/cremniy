@@ -9,6 +9,18 @@ set(CMAKE_AUTORCC ON)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+option(CREMNIY_ENABLE_ASAN "Enable AddressSanitizer for supported debug builds" OFF)
+
+if(CREMNIY_ENABLE_ASAN)
+    if(MSVC)
+        add_compile_options($<$<CONFIG:Debug>:/fsanitize=address>)
+        add_link_options($<$<CONFIG:Debug>:/INCREMENTAL:NO> $<$<CONFIG:Debug>:/fsanitize=address>)
+    else()
+        add_compile_options($<$<CONFIG:Debug>:-fsanitize=address> $<$<CONFIG:Debug>:-fno-omit-frame-pointer>)
+        add_link_options($<$<CONFIG:Debug>:-fsanitize=address>)
+    endif()
+endif()
+
 find_package(Qt6 6.8.2 REQUIRED COMPONENTS Widgets Test)
 
 set(PROJECT_SOURCES
@@ -65,8 +77,8 @@ qt_add_executable(${PROJECT_NAME}
     utils/projectshistorymanager.h
 
     core/ToolTab.h
-    core/ToolTabFactory.cpp
-    core/ToolTabFactory.h
+    core/ToolsRegistry.cpp
+    core/ToolsRegistry.h
 
     ui/MenuBar/menubarbuilder.h ui/MenuBar/menubarbuilder.cpp
     ui/MenuBar/menufactory.h ui/MenuBar/menufactory.cpp
@@ -105,7 +117,10 @@ add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/libs/cremniy-codeeditor ${CMAKE_BIN
 add_subdirectory(ToolTabs/always)
 add_subdirectory(ToolTabs/other)
 
-target_link_libraries(${PROJECT_NAME} PRIVATE Qt6::Widgets)
+target_link_libraries(${PROJECT_NAME} PRIVATE
+    Qt6::Widgets
+    cremniy-codeeditor
+)
 
 find_program(WINDEPLOYQT_EXECUTABLE windeployqt)
 

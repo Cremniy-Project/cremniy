@@ -2,6 +2,7 @@ project(QHexView)
 
 option(QHEXVIEW_ENABLE_DIALOGS "BuiltIn dialogs" ON)
 
+find_package(Qt6 6.8 REQUIRED COMPONENTS Widgets)
 add_library(${PROJECT_NAME} STATIC)
 
 set_target_properties(${PROJECT_NAME}
@@ -11,7 +12,10 @@ set_target_properties(${PROJECT_NAME}
         AUTOMOC ON
 )
 
-target_link_libraries(${PROJECT_NAME} PUBLIC Qt6::Widgets)
+target_link_libraries(${PROJECT_NAME} PUBLIC
+    Qt6::Widgets
+    cremniy-codeeditor
+)
 
 target_sources(${PROJECT_NAME}
     PRIVATE 
