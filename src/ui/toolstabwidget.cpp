@@ -143,26 +143,36 @@ ToolTab* ToolsTabWidget::createToolTab(const QString& toolId)
 
 void ToolsTabWidget::setActiveToolTab(ToolTab* tab)
 {
-    if (m_activeToolTab) {
-        disconnect(m_activeToolTab, &ToolTab::statusStateChanged, this, nullptr);
-    }
+    if (m_activeStatusConnection)
+        disconnect(m_activeStatusConnection);
 
     m_activeToolTab = tab;
 
     if (!m_activeToolTab) {
-        m_activeStatusState = {"No tool selected", "", ""};
-        emit activeStatusStateChanged(m_activeStatusState);
+        updateActiveStatusState({"No tool selected", "", ""});
         return;
     }
 
-    connect(m_activeToolTab, &ToolTab::statusStateChanged, this, [this](const ToolStatusState& state) {
-        m_activeStatusState = state;
-        emit activeStatusStateChanged(m_activeStatusState);
-    });
+    m_activeStatusConnection = connect(
+        m_activeToolTab,
+        &ToolTab::statusStateChanged,
+        this,
+        &ToolsTabWidget::updateActiveStatusState
+    );
 
-    m_activeStatusState = m_activeToolTab->statusState();
+    updateActiveStatusState(m_activeToolTab->statusState());
+}
+
+void ToolsTabWidget::updateActiveStatusState(const ToolStatusState& state)
+{
+    if (m_activeStatusState.left == state.left &&
+        m_activeStatusState.center == state.center &&
+        m_activeStatusState.right == state.right) {
+        return;
+    }
+
+    m_activeStatusState = state;
     emit activeStatusStateChanged(m_activeStatusState);
-    m_activeToolTab->publishStatusState();
 }
 
 ToolTab* ToolsTabWidget::openToolTab(const QString& toolId, bool activate)

@@ -878,15 +878,42 @@ int DisassemblerTab::currentInstructionOrdinal(int visibleLine) const
 
 void DisassemblerTab::updateStatusState()
 {
-    if (m_running) {
+    if (m_statusMode == StatusMode::Loading || m_running) {
         setStatusState({"Disassembling…", "", "Disassembler"});
+        return;
+    }
+
+    if (m_statusMode == StatusMode::Idle) {
+        setStatusState({"Ready to disassemble", "", "Disassembler"});
+        return;
+    }
+
+    if (m_statusMode == StatusMode::Error) {
+        setStatusState({
+            m_statusDetail.isEmpty() ? QStringLiteral("Disassembly failed") : m_statusDetail,
+            QString(),
+            QStringLiteral("Disassembler")
+        });
+        return;
+    }
+
+    if (m_statusMode == StatusMode::Empty) {
+        setStatusState({
+            m_statusDetail.isEmpty() ? QStringLiteral("No disassembly results") : m_statusDetail,
+            QString(),
+            QStringLiteral("Disassembler")
+        });
         return;
     }
 
     int visibleLine = -1;
     const LineInfo *lineInfo = currentLineInfo(&visibleLine);
     if (!lineInfo) {
-        setStatusState({"No instruction selected", "", "Disassembler"});
+        setStatusState({
+            m_statusDetail.isEmpty() ? QStringLiteral("No instruction selected") : m_statusDetail,
+            QString(),
+            QStringLiteral("Disassembler")
+        });
         return;
     }
 
@@ -921,7 +948,12 @@ void DisassemblerTab::onGlobalActionTriggered(const QString &actionName)
 void DisassemblerTab::startDisassembly()
 {
     if (m_running) return;
-    if (m_fileContext->filePath().isEmpty()) { showPlaceholder(tr("No file path set")); return; }
+    if (m_fileContext->filePath().isEmpty()) {
+        m_statusMode = StatusMode::Error;
+        m_statusDetail = QStringLiteral("No file path set");
+        showPlaceholder(tr("No file path set"));
+        return;
+    }
 
     // If radare2 backend is selected, ensure r2 is available. If not, prompt for path.
     if (AppSettings::disasmBackend() == AppSettings::DisasmBackend::Radare2) {
@@ -936,6 +968,8 @@ void DisassemblerTab::startDisassembly()
                 QString());
             if (picked.isEmpty()) {
                 appendLog("[disasm] radare2 not configured; cancelled");
+                m_statusMode = StatusMode::Error;
+                m_statusDetail = QStringLiteral("radare2 is not configured");
                 showPlaceholder(tr("radare2 is not configured — set it in Settings"));
                 return;
             }
@@ -976,6 +1010,8 @@ void DisassemblerTab::startDisassembly()
                   .arg(AppSettings::disasmBackend() == AppSettings::DisasmBackend::Radare2 ? "radare2" : "objdump"));
 
     setRunningState(true);
+    m_statusMode = StatusMode::Loading;
+    m_statusDetail.clear();
     showPlaceholder(tr("Disassembling…"));
     updateStatusState();
 
@@ -1039,6 +1075,8 @@ void DisassemblerTab::onSectionFound(const DisasmSection &section)
 
     int total = 0;
     for (const auto &s : m_sections) total += s.instructions.size();
+    m_statusMode = StatusMode::Ready;
+    m_statusDetail = tr("%1 instructions").arg(total);
     m_statusLabel->setText(
         tr("%1 section(s) · %2 instructions loaded…").arg(m_sections.size()).arg(total));
     updateStatusState();
@@ -1153,6 +1191,7 @@ void DisassemblerTab::jumpToAddress(const QString &addr)
     } else {
         // Если адрес не найден (например, он в другой секции, которая сейчас скрыта фильтром)
         m_statusLabel->setText(tr("Address %1 is not visible in current view").arg(addr));
+        m_statusDetail = tr("Address %1 is not visible").arg(addr);
         updateStatusState();
     }
 }
@@ -1165,6 +1204,8 @@ void DisassemblerTab::onWorkerFinished()
     appendLog("=== Disassembly finished ===");
 
     if (m_sections.isEmpty()) {
+        m_statusMode = StatusMode::Empty;
+        m_statusDetail = QStringLiteral("No disassemblable sections found");
         showPlaceholder(
             tr("No disassemblable sections found.\n"
                "Make sure the file is a supported binary (ELF, PE, Mach-O…)\n"
@@ -1176,6 +1217,8 @@ void DisassemblerTab::onWorkerFinished()
 
     int total = 0;
     for (const auto &s : m_sections) total += s.instructions.size();
+    m_statusMode = StatusMode::Ready;
+    m_statusDetail = tr("%1 instructions").arg(total);
     m_statusLabel->setText(
         tr("%1 section(s) · %2 instructions").arg(m_sections.size()).arg(total));
 
@@ -1194,6 +1237,8 @@ void DisassemblerTab::onWorkerError(const QString &msg)
     setRunningState(false);
     m_progressBar->setVisible(false);
     appendLog("[ERROR] " + msg);
+    m_statusMode = StatusMode::Error;
+    m_statusDetail = msg.isEmpty() ? QStringLiteral("Disassembly failed") : msg;
     showPlaceholder(tr("objdump error — see Log panel for details"));
     m_statusLabel->setText(tr("Error"));
     updateStatusState();
@@ -1329,8 +1374,16 @@ void DisassemblerTab::applyFilter()
     m_disasmView->setPlainText(out.join('\n'));
 
     if (shownLines == 0 && haveQuery) {
+        m_statusMode = StatusMode::Empty;
+        m_statusDetail = tr("No results for \"%1\"").arg(m_searchEdit->text());
         showPlaceholder(tr("No results for \"%1\"").arg(m_searchEdit->text()));
     } else {
+        m_statusMode = m_sections.isEmpty() ? StatusMode::Empty : StatusMode::Ready;
+        if (!haveQuery) {
+            m_statusDetail = tr("%1 instructions").arg(shownLines);
+        } else {
+            m_statusDetail = tr("%1 filtered instructions").arg(shownLines);
+        }
         m_stack->setCurrentWidget(m_topSplitter);
     }
     

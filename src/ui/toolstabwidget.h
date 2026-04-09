@@ -5,6 +5,7 @@
 #include <QByteArray>
 #include <QString>
 #include <QTabWidget>
+#include <QMetaObject>
 
 class QVBoxLayout;
 class QSyntaxStyle;
@@ -33,10 +34,12 @@ private:
     ToolTab* createToolTab(const QString& toolId);
     void setActiveToolTab(ToolTab* tab);
     void updateCloseButtons();
+    void updateActiveStatusState(const ToolStatusState& state);
     FileDataBuffer* m_sharedBuffer = nullptr;
     QString m_filePath;
     ToolTab* m_activeToolTab = nullptr;
     ToolStatusState m_activeStatusState = {"No tool selected", "", ""};
+    QMetaObject::Connection m_activeStatusConnection;
 
 public slots:
     void closeToolTab(int index);

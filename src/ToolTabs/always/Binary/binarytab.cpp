@@ -125,9 +125,6 @@ BinaryTab::BinaryTab(FileDataBuffer* buffer, QWidget *parent)
     m_findShortcut = new QShortcut(QKeySequence::Find, this);
     connect(m_findShortcut, &QShortcut::activated, this, &BinaryTab::openFindDialog);
 
-    connect(m_dataBuffer, &FileDataBuffer::selectionChanged,
-            this, &BinaryTab::onSelectionChanged);
-
     updateStatusState();
 }
 

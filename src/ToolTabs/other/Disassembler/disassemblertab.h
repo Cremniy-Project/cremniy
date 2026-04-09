@@ -85,6 +85,14 @@ private slots:
     void onGlobalActionTriggered(const QString &actionName);
 
 private:
+    enum class StatusMode {
+        Idle,
+        Loading,
+        Ready,
+        Empty,
+        Error,
+    };
+
     bool eventFilter(QObject *watched, QEvent *event) override;
     void showInstructionHelpAt(const QPoint &pos, bool forceByCursor = false);
 
@@ -142,6 +150,8 @@ private:
 
     int m_currentSectionIndex = -1;
     QTimer *m_refreshDebounce = nullptr;
+    StatusMode m_statusMode = StatusMode::Idle;
+    QString m_statusDetail;
 };
 
 #endif // DISASSEMBLERTAB_H
