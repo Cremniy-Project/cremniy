@@ -69,13 +69,10 @@ qt_add_executable(${PROJECT_NAME}
     core/project/projectshistorymanager.h
     core/settings/appsettings.cpp
     core/settings/appsettings.h
-<<<<<<< HEAD
     core/icons/iconprovider.cpp
     core/icons/iconprovider.h
     core/settings/exclusionfilterproxymodel.cpp
     core/settings/exclusionfilterproxymodel.h
-=======
->>>>>>> 6bd6db6 (arch: file structure)
     core/ToolsRegistry.cpp
     core/ToolsRegistry.h
     core/ToolTab.h
@@ -85,29 +82,12 @@ qt_add_executable(${PROJECT_NAME}
     ui/FilesTabWidget/filestabwidget.h
     ui/ToolsTabWidget/toolstabwidget.cpp
     ui/ToolsTabWidget/toolstabwidget.h
-<<<<<<< HEAD
-=======
     ui/ToolsTabWidget/ToolTab.h
->>>>>>> 6bd6db6 (arch: file structure)
 
     # UI Menubar
     ui/MenuBar/menubarbuilder.h ui/MenuBar/menubarbuilder.cpp
     ui/MenuBar/menufactory.h ui/MenuBar/menufactory.cpp
     ui/MenuBar/basemenu.h
-<<<<<<< HEAD
-=======
-    ui/MenuBar/Menus/Edit/editmenu.h ui/MenuBar/Menus/Edit/editmenu.cpp
-    ui/MenuBar/Menus/View/viewmenu.h ui/MenuBar/Menus/View/viewmenu.cpp
-    ui/MenuBar/Menus/Build/buildmenu.h ui/MenuBar/Menus/Build/buildmenu.cpp
-    ui/MenuBar/Menus/Tools/toolsmenu.h ui/MenuBar/Menus/Tools/toolsmenu.cpp
-    ui/MenuBar/Menus/References/referencesmenu.h ui/MenuBar/Menus/References/referencesmenu.cpp
-    ui/MenuBar/Menus/References/referencewindow.h
-    ui/MenuBar/Menus/References/Windows/AsciiChars/asciicharsref.cpp
-    ui/MenuBar/Menus/References/Windows/AsciiChars/asciicharsref.h
-
-
->>>>>>> 6bd6db6 (arch: file structure)
-
 )
 
 target_include_directories(${PROJECT_NAME} PRIVATE
@@ -117,43 +97,11 @@ target_include_directories(${PROJECT_NAME} PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/core/project
     ${CMAKE_CURRENT_SOURCE_DIR}/core/settings
     ${CMAKE_CURRENT_SOURCE_DIR}/utils
-<<<<<<< HEAD
     ${CMAKE_CURRENT_SOURCE_DIR}/ui
-    ${CMAKE_CURRENT_SOURCE_DIR}/ToolsTabWidget
-    ${CMAKE_CURRENT_SOURCE_DIR}/FilesTabWidget
-=======
-    ${CMAKE_CURRENT_SOURCE_DIR}/ToolsTabWidget
-    ${CMAKE_CURRENT_SOURCE_DIR}/FilesTabWidget
+    ${CMAKE_CURRENT_SOURCE_DIR}/ui/ToolsTabWidget
+    ${CMAKE_CURRENT_SOURCE_DIR}/ui/FilesTabWidget
 )
 
-
-# - - Libs - -
-add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/libs/CodeEditor/ ${CMAKE_BINARY_DIR}/libs/CodeEditor/)
-target_link_libraries(${PROJECT_NAME} PRIVATE CodeEditor)
-
-add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/libs/HexEditor/ ${CMAKE_BINARY_DIR}/libs/HexEditor/)
-target_link_libraries(${PROJECT_NAME} PRIVATE HexEditor)
-
-# - - Tools - -
-add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/Tools/Tabs/)
-add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/Tools/Windows/)
-
-target_link_libraries(${PROJECT_NAME} PRIVATE
-    Qt6::Widgets
-    cremniy-codeeditor
->>>>>>> 6bd6db6 (arch: file structure)
-)
-
-file(GLOB_RECURSE PHOICONS_FILES
-    "resources/icons/phoicons/*.svg"
-    "resources/icons/phoicons/*.theme"
-)
-
-qt_add_resources(${PROJECT_NAME} "phoicons_icons"
-    PREFIX "/icons"
-    BASE "resources/icons"
-    FILES ${PHOICONS_FILES}
-)
 
 # - - Libs - -
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/libs/CodeEditor/ ${CMAKE_BINARY_DIR}/libs/CodeEditor/)
@@ -182,12 +130,9 @@ if(WIN32 AND WINDEPLOYQT_EXECUTABLE)
     )
 endif()
 
-<<<<<<< HEAD
-=======
 if(QT_VERSION VERSION_LESS 6.1.0)
   set(BUNDLE_ID_OPTION MACOSX_BUNDLE_GUI_IDENTIFIER com.example.${PROJECT_NAME})
 endif()
->>>>>>> e4d81f3 (fix: correct Qt version check in CMake)
 set_target_properties(${PROJECT_NAME} PROPERTIES
     ${BUNDLE_ID_OPTION}
     MACOSX_BUNDLE_BUNDLE_VERSION ${PROJECT_VERSION}
