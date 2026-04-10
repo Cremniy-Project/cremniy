@@ -99,9 +99,11 @@ target_include_directories(${PROJECT_NAME} PRIVATE
 
 
 # - - Libs - -
-set(BUILD_EXAMPLE OFF CACHE BOOL "Disable vendored code editor example" FORCE)
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/libs/CodeEditor/ ${CMAKE_BINARY_DIR}/libs/CodeEditor/)
 target_link_libraries(${PROJECT_NAME} PRIVATE CodeEditor)
+
+add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/libs/HexEditor/ ${CMAKE_BINARY_DIR}/libs/HexEditor/)
+target_link_libraries(${PROJECT_NAME} PRIVATE HexEditor)
 
 # - - Tools - -
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/Tools/Tabs/)

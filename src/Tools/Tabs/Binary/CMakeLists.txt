@@ -19,6 +19,3 @@ foreach(dir ${TOOLTAB_DIRS})
         add_subdirectory(${dir})
     endif()
 endforeach()
-
-add_subdirectory(QHexView)
-target_link_libraries(${PROJECT_NAME} PRIVATE QHexView)

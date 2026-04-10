@@ -1,4 +1,4 @@
-project(QHexView)
+project(HexEditor)
 
 option(QHEXVIEW_ENABLE_DIALOGS "BuiltIn dialogs" ON)
 
@@ -55,7 +55,6 @@ target_sources(${PROJECT_NAME}
 )
 
 target_include_directories(${PROJECT_NAME} PUBLIC
-    ${CMAKE_SOURCE_DIR}/libs/cremniy-codeeditor/include
     ${PROJECT_SOURCE_DIR}
     ${PROJECT_SOURCE_DIR}/include
     ${CMAKE_SOURCE_DIR}
