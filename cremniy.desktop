@@ -8,5 +8,6 @@ Icon=cremniy
 Terminal=false
 Categories=Development;IDE;
 Keywords=hex;disassembler;reverse;engineering;
-MimeType=application/octet-stream;
+MimeType=application/octet-stream;application/x-executable;application/x-sharedlib;application/x-object;text/x-csrc;text/x-chdr;text/x-c++src;text/x-c++hdr;text/x-asm;text/plain;
 StartupNotify=true
+StartupWMClass=cremniy
