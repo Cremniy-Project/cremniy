@@ -135,11 +135,7 @@ void QHexView::PaintContext::advanceX() { x += this->hexview->cellWidth(); }
 QHexView::QHexView(QWidget* parent)
     : QAbstractScrollArea(parent), m_fontmetrics(this->font()) {
     QFont f = QFontDatabase::systemFont(QFontDatabase::FixedFont);
-
-    if(f.styleHint() != QFont::TypeWriter) {
-        f.setFamily("Monospace"); // Force Monospaced font
-        f.setStyleHint(QFont::TypeWriter);
-    }
+    f.setStyleHint(QFont::Monospace);
 
     this->setFont(f);
     this->setMouseTracking(true);
