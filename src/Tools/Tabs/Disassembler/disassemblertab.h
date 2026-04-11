@@ -145,4 +145,6 @@ private:
     QTimer *m_refreshDebounce = nullptr;
 };
 
+
+
 #endif // DISASSEMBLERTAB_H

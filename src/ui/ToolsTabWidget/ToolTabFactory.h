@@ -1,8 +1,10 @@
 #pragma once
 
 #include <functional>
+#include <QApplication>
 #include <QList>
 #include <QMap>
+#include <QObject>
 #include <QString>
 
 class ToolTab;
@@ -20,13 +22,17 @@ public:
 
     struct Descriptor {
         QString id;
-        QString name;
+        const char * name;
         ToolTabGroup group = ToolTabGroup::Other;
         bool autoOpen = false;
         int order = 0;
         Creator creator;
 
         bool isValid() const { return !id.isEmpty() && static_cast<bool>(creator); }
+        [[nodiscard]] QString translateName() const {
+            if (name == nullptr) return QObject::tr("unnamed");
+            return QCoreApplication::translate(id.toUtf8(), name);
+        }
     };
 
     static ToolTabFactory& instance();
@@ -44,7 +50,7 @@ private:
 
 template <typename ToolTabType>
 inline ToolTabFactory::Descriptor makeToolTabDescriptor(const QString& id,
-    const QString& name,
+    const char * name,
     ToolTabGroup group,
     bool autoOpen,
     int order)
@@ -63,7 +69,7 @@ inline ToolTabFactory::Descriptor makeToolTabDescriptor(const QString& id,
 
 template <typename ToolTabType>
 inline bool registerToolTab(const QString& id,
-    const QString& name,
+    const char * name,
     ToolTabGroup group,
     bool autoOpen,
     int order)
@@ -74,13 +80,13 @@ inline bool registerToolTab(const QString& id,
 }
 
 template <typename ToolTabType>
-inline bool registerAlwaysToolTab(const QString& id, const QString& name, int order)
+inline bool registerAlwaysToolTab(const QString& id, const char * name, int order)
 {
     return registerToolTab<ToolTabType>(id, name, ToolTabGroup::Always, true, order);
 }
 
 template <typename ToolTabType>
-inline bool registerOtherToolTab(const QString& id, const QString& name)
+inline bool registerOtherToolTab(const QString& id, const char * name)
 {
     return registerToolTab<ToolTabType>(id, name, ToolTabGroup::Other, false, 0);
 }

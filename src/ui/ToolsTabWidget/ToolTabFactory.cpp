@@ -11,7 +11,6 @@ void ToolTabFactory::registerTab(const Descriptor& descriptor) {
     if (!descriptor.isValid()) {
         return;
     }
-
     m_descriptors[descriptor.id] = descriptor;
 }
 
@@ -35,7 +34,7 @@ QList<ToolTabFactory::Descriptor> ToolTabFactory::availableTabs() const {
             return left.order < right.order;
         }
 
-        return left.name < right.name;
+        return left.translateName() < right.translateName();
     });
     return tabs;
 }

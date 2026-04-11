@@ -17,15 +17,15 @@ ToolsMenu::ToolsMenu() : BaseMenu(tr("Tools")) {
   m_reverseCalculator = new QAction(tr("Reverse Calculator"), this);
   m_reverseCalculator->setShortcut(QKeySequence(Qt::CTRL | Qt::SHIFT | Qt::Key_R));
 
-  m_dataConverter = new QAction("Data Converter", this);
+  m_dataConverter = new QAction(tr("Data Converter"), this);
   m_dataConverter->setShortcut(QKeySequence(Qt::CTRL | Qt::SHIFT | Qt::Key_D));
 
-  m_shellcodeGenerator = new QAction("Shellcode Generator", this);
+  m_shellcodeGenerator = new QAction(tr("Shellcode Generator"), this);
   m_shellcodeGenerator->setShortcut(QKeySequence(Qt::CTRL | Qt::SHIFT | Qt::Key_S));
 
   const auto toolDescriptors = ToolTabFactory::instance().availableTabs(ToolTabGroup::Other);
   for (const auto& descriptor : toolDescriptors) {
-    auto* action = new QAction(descriptor.name, this);
+    auto* action = new QAction(descriptor.translateName(), this);
     action->setProperty("toolTabId", descriptor.id);
     m_toolTabActions.append(action);
     addAction(action);

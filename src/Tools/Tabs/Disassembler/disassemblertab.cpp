@@ -35,7 +35,7 @@
 #include "ui/ToolsTabWidget/ToolTabFactory.h"
 
 static const bool registeredDisassemblerTab =
-    registerOtherToolTab<DisassemblerTab>(QStringLiteral("disassembler"), QStringLiteral("Disassembler"));
+    registerOtherToolTab<DisassemblerTab>(QStringLiteral("disassembler"), QT_TRANSLATE_NOOP("disassembler","Disassembler"));
 
 static QString normalizeBytes(const QString &bytes)
 {
