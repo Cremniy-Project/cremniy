@@ -3,6 +3,7 @@
 #include <QClipboard>
 #include <QComboBox>
 #include <QAbstractItemView>
+#include <QApplication>
 #include <QFormLayout>
 #include <QGuiApplication>
 #include <QHBoxLayout>
@@ -24,16 +25,16 @@ struct UnitInfo {
 };
 
 static const UnitInfo kUnits[] = {
-    { "Bits",      "Bit",    1.0 / 8.0 },
-    { "Bytes",     "Byte",   1.0 },
-    { "Kilobytes", "KB",     1024.0 },
-    { "Megabytes", "MB",     1024.0 * 1024.0 },
-    { "Gigabytes", "GB",     1024.0 * 1024.0 * 1024.0 },
-    { "Terabytes", "TB",     1024.0 * 1024.0 * 1024.0 * 1024.0 },
-    { "Petabytes", "PB",     1024.0 * 1024.0 * 1024.0 * 1024.0 * 1024.0 },
-    { "Exabytes",  "EB",     1024.0 * 1024.0 * 1024.0 * 1024.0 * 1024.0 * 1024.0 },
-    { "Zettabytes","ZB",     1024.0 * 1024.0 * 1024.0 * 1024.0 * 1024.0 * 1024.0 * 1024.0 },
-    { "Yottabytes","YB",     1024.0 * 1024.0 * 1024.0 * 1024.0 * 1024.0 * 1024.0 * 1024.0 * 1024.0 },
+    { QT_TRANSLATE_NOOP("DataConverterDialog","Bits"),      "Bit",    1.0 / 8.0 },
+    { QT_TRANSLATE_NOOP("DataConverterDialog","Bytes"),     "Byte",   1.0 },
+    { QT_TRANSLATE_NOOP("DataConverterDialog","Kilobytes"), "KB",     1024.0 },
+    { QT_TRANSLATE_NOOP("DataConverterDialog","Megabytes"), "MB",     1024.0 * 1024.0 },
+    { QT_TRANSLATE_NOOP("DataConverterDialog","Gigabytes"), "GB",     1024.0 * 1024.0 * 1024.0 },
+    { QT_TRANSLATE_NOOP("DataConverterDialog","Terabytes"), "TB",     1024.0 * 1024.0 * 1024.0 * 1024.0 },
+    { QT_TRANSLATE_NOOP("DataConverterDialog","Petabytes"), "PB",     1024.0 * 1024.0 * 1024.0 * 1024.0 * 1024.0 },
+    { QT_TRANSLATE_NOOP("DataConverterDialog","Exabytes"),  "EB",     1024.0 * 1024.0 * 1024.0 * 1024.0 * 1024.0 * 1024.0 },
+    { QT_TRANSLATE_NOOP("DataConverterDialog","Zettabytes"),"ZB",     1024.0 * 1024.0 * 1024.0 * 1024.0 * 1024.0 * 1024.0 * 1024.0 },
+    { QT_TRANSLATE_NOOP("DataConverterDialog","Yottabytes"),"YB",     1024.0 * 1024.0 * 1024.0 * 1024.0 * 1024.0 * 1024.0 * 1024.0 * 1024.0 },
 };
 
 static constexpr int kUnitCount = 10;
@@ -127,7 +128,7 @@ DataConverterDialog::DataConverterDialog(QWidget* parent)
         m_labels[i]->setStyleSheet(QString("color: %1;").arg(kColors[i]));
 
         m_copies[i] = new QPushButton(tr("Copy"), this);
-        m_copies[i]->setFixedWidth(56);
+        m_copies[i]->setFixedWidth(135);
 
         auto* rowWidget = new QWidget(this);
         auto* rowLayout = new QHBoxLayout(rowWidget);

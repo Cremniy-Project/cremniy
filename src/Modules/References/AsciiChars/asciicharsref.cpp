@@ -23,7 +23,7 @@ AsciiCharsRef::AsciiCharsRef()
 }
 
 void AsciiCharsRef::initWindow() {
-    this->setWindowTitle("ASCII / Unicode Characters");
+    this->setWindowTitle(tr("ASCII / Unicode Characters"));
     this->setMinimumSize(840, 580);
 }
 
@@ -117,8 +117,8 @@ void AsciiCharsRef::initWidgets() {
     QVBoxLayout* layout = new QVBoxLayout(this);
 
     QTabBar* tabBar = new QTabBar(this);
-    tabBar->addTab("ASCII (0-127)");
-    tabBar->addTab("Unicode");
+    tabBar->addTab(tr("ASCII (0-127)"));
+    tabBar->addTab(tr("Unicode"));
     tabBar->setExpanding(false);
     layout->addWidget(tabBar);
 
@@ -184,16 +184,16 @@ void AsciiCharsRef::initWidgets() {
     layout->addLayout(lineEditLayout);
 
     QLineEdit* symbolInput = new QLineEdit(this);
-    symbolInput->setPlaceholderText("Search by Character");
+    symbolInput->setPlaceholderText(tr("Search by Character"));
     lineEditLayout->addWidget(symbolInput);
 
     QLineEdit* decInput = new QLineEdit(this);
-    decInput->setPlaceholderText("Search by Decimal (0-127)");
+    decInput->setPlaceholderText(tr("Search by Decimal (0-127)"));
     decInput->setValidator(new QIntValidator(0, 127, this));
     lineEditLayout->addWidget(decInput);
 
     QLineEdit* hexInput = new QLineEdit(this);
-    hexInput->setPlaceholderText("Search by Hex (0-7F)");
+    hexInput->setPlaceholderText(tr("Search by Hex (0-7F)"));
     hexInput->setValidator(new QRegularExpressionValidator(QRegularExpression("[0-9A-Fa-f]{1,2}"), hexInput));
     lineEditLayout->addWidget(hexInput);
 
@@ -255,17 +255,17 @@ void AsciiCharsRef::initWidgets() {
         if (index == 0) {
             *isUnicodeMode = false;
             *currentRows = buildAsciiRows();
-            decInput->setPlaceholderText("Search by Decimal (0-127)");
+            decInput->setPlaceholderText(tr("Search by Decimal (0-127)"));
             decInput->setValidator(new QIntValidator(0, 127, decInput));
-            hexInput->setPlaceholderText("Search by Hex (0-7F)");
+            hexInput->setPlaceholderText(tr("Search by Hex (0-7F)"));
             hexInput->setValidator(new QRegularExpressionValidator(QRegularExpression("[0-9A-Fa-f]{1,2}"), hexInput));
         }
         else {
             *isUnicodeMode = true;
             *currentRows = buildUnicodeRows();
-            decInput->setPlaceholderText("Search by Decimal (Unicode)");
+            decInput->setPlaceholderText(tr("Search by Decimal (Unicode)"));
             decInput->setValidator(new QIntValidator(0, 0xFFFF, decInput));
-            hexInput->setPlaceholderText("Search by Hex (Unicode)");
+            hexInput->setPlaceholderText(tr("Search by Hex (Unicode)"));
             hexInput->setValidator(new QRegularExpressionValidator(QRegularExpression("[0-9A-Fa-f]{1,4}"), hexInput));
         }
 
@@ -283,11 +283,11 @@ void AsciiCharsRef::initWidgets() {
         bool unicode = *isUnicodeMode;
 
         QMenu menu(table);
-        QAction* copyChar = menu.addAction("Copy Char");
-        QAction* copyCode = unicode ? menu.addAction("Copy Code") : nullptr;
-        QAction* copyDec = menu.addAction("Copy Decimal");
-        QAction* copyHex = menu.addAction("Copy Hex");
-        QAction* copyRow = menu.addAction("Copy Row");
+        QAction* copyChar = menu.addAction(tr("Copy Char"));
+        QAction* copyCode = unicode ? menu.addAction(tr("Copy Code")) : nullptr;
+        QAction* copyDec = menu.addAction(tr("Copy Decimal"));
+        QAction* copyHex = menu.addAction(tr("Copy Hex"));
+        QAction* copyRow = menu.addAction(tr("Copy Row"));
 
         QAction* chosen = menu.exec(table->viewport()->mapToGlobal(pos));
         if (!chosen) return;
