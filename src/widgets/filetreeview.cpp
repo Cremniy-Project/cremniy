@@ -153,8 +153,10 @@ void FileTreeView::dropEvent(QDropEvent *event)
         QString msg = tr("Are you sure you want to move '%1' into '%2'?")
                       .arg(sourceInfo.fileName(), QFileInfo(targetDirPath).fileName());
 
-        auto reply = QMessageBox::question(this, tr("Confirm Move"), msg,
-                                           QMessageBox::Yes | QMessageBox::No);
+        QMessageBox confirm_move(QMessageBox::Question, tr("Confirm move"), msg, QMessageBox::Yes | QMessageBox::No, this);
+        confirm_move.setButtonText(QMessageBox::Yes, tr("Yes"));
+        confirm_move.setButtonText(QMessageBox::No, tr("No"));
+        auto reply = confirm_move.exec();
         if (reply == QMessageBox::Yes) {
             if (QFile::rename(sourcePath, targetPath)) {
                 movedAny = true;
