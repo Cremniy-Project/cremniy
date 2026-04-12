@@ -23,12 +23,13 @@ FilesTabWidget::FilesTabWidget(QWidget *parent) {
 
 void FilesTabWidget::tabSelect(int index) {
     FileTab *tab = qobject_cast<FileTab *>(widget(index));
-    if (!tab) {
+    if (!tab || !tab->toolsTabWidget()) {
         emit statusBarInfoChanged(QString());
         return;
     }
-    // Clear stale info; the active tool tab will emit fresh info on next cursor move
-    emit statusBarInfoChanged(QString());
+    QWidget* currentTool = tab->toolsTabWidget()->currentWidget();
+    QString lastInfo = currentTool ? currentTool->property("lastStatusBarInfo").toString() : QString();
+    emit statusBarInfoChanged(lastInfo);
 }
 
 // Create new tab and open file if he is not open already

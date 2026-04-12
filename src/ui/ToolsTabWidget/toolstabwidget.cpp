@@ -51,6 +51,9 @@ ToolsTabWidget::ToolsTabWidget(QWidget *parent, QString path)
             tab->setTabData();
             tab->setProperty("tabDataLoaded", true);
         }
+
+        QString lastInfo = tab->property("lastStatusBarInfo").toString();
+        emit statusBarInfoChanged(lastInfo);
     });
 
     connect(this, &QTabWidget::tabCloseRequested, this, &ToolsTabWidget::closeToolTab);
@@ -110,6 +113,7 @@ ToolTab* ToolsTabWidget::createToolTab(const QString& toolId)
     connect(tab, &ToolTab::modifyData, this, &ToolsTabWidget::setupStar);
     connect(tab, &ToolTab::dataEqual, this, &ToolsTabWidget::removeStar);
     connect(tab, &ToolTab::statusBarInfoChanged, this, [this, tab](const QString& info) {
+        tab->setProperty("lastStatusBarInfo", info);
         if (currentWidget() == tab)
             emit statusBarInfoChanged(info);
     });

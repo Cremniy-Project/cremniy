@@ -25,6 +25,8 @@ IDEWindow::IDEWindow(QString ProjectPath, QWidget *parent)
 
     // - - Widgets - -
     m_statusBar = statusBar();
+    m_statusLabel = new QLabel(this);
+    m_statusBar->addPermanentWidget(m_statusLabel);
 
     m_mainWidget = new QWidget(this);
     m_mainLayout = new QHBoxLayout(m_mainWidget);
@@ -109,7 +111,7 @@ IDEWindow::IDEWindow(QString ProjectPath, QWidget *parent)
 
     connect(m_filesTabWidget, &FilesTabWidget::statusBarInfoChanged,
             this, [this](const QString& info) {
-                m_statusBar->showMessage(info);
+                m_statusLabel->setText(info);
             });
 
     connect(m_filesTabWidget, &QTabWidget::tabCloseRequested,m_filesTabWidget, &FilesTabWidget::closeTab);

@@ -8,6 +8,7 @@
 #include <qmenubar.h>
 #include <qsplitter.h>
 #include <qstatusbar.h>
+#include <QLabel>
 #include "widgets/terminal/terminalwidget.h"
 
 class IDEWindow : public QMainWindow
@@ -42,6 +43,7 @@ private:
     // - - Main Widgets - -
     QMenuBar* m_menuBar;
     QStatusBar* m_statusBar;
+    QLabel* m_statusLabel;
     QWidget* m_mainWidget;
     QHBoxLayout* m_mainLayout;
     QSplitter* m_verticalSplitter;  // splitter (вверх вниз)
