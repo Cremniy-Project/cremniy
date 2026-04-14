@@ -9,6 +9,18 @@ set(CMAKE_AUTORCC ON)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+option(CREMNIY_ENABLE_ASAN "Enable AddressSanitizer for supported debug builds" OFF)
+
+if(CREMNIY_ENABLE_ASAN)
+    if(MSVC)
+        add_compile_options($<$<CONFIG:Debug>:/fsanitize=address>)
+        add_link_options($<$<CONFIG:Debug>:/INCREMENTAL:NO> $<$<CONFIG:Debug>:/fsanitize=address>)
+    else()
+        add_compile_options($<$<CONFIG:Debug>:-fsanitize=address> $<$<CONFIG:Debug>:-fno-omit-frame-pointer>)
+        add_link_options($<$<CONFIG:Debug>:-fsanitize=address>)
+    endif()
+endif()
+
 find_package(Qt6 6.8.2 REQUIRED COMPONENTS Widgets Test Svg)
 
 set(PROJECT_SOURCES
@@ -61,6 +73,8 @@ qt_add_executable(${PROJECT_NAME}
     core/icons/iconprovider.h
     core/settings/exclusionfilterproxymodel.cpp
     core/settings/exclusionfilterproxymodel.h
+    core/ToolsRegistry.cpp
+    core/ToolsRegistry.h
 
     # UI
     ui/FilesTabWidget/filestabwidget.cpp
@@ -68,14 +82,11 @@ qt_add_executable(${PROJECT_NAME}
     ui/ToolsTabWidget/toolstabwidget.cpp
     ui/ToolsTabWidget/toolstabwidget.h
     ui/ToolsTabWidget/ToolTab.h
-    ui/ToolsTabWidget/ToolTabFactory.cpp
-    ui/ToolsTabWidget/ToolTabFactory.h
 
     # UI Menubar
     ui/MenuBar/menubarbuilder.h ui/MenuBar/menubarbuilder.cpp
     ui/MenuBar/menufactory.h ui/MenuBar/menufactory.cpp
     ui/MenuBar/basemenu.h
-
 )
 
 target_include_directories(${PROJECT_NAME} PRIVATE
@@ -86,20 +97,10 @@ target_include_directories(${PROJECT_NAME} PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/core/settings
     ${CMAKE_CURRENT_SOURCE_DIR}/utils
     ${CMAKE_CURRENT_SOURCE_DIR}/ui
-    ${CMAKE_CURRENT_SOURCE_DIR}/ToolsTabWidget
-    ${CMAKE_CURRENT_SOURCE_DIR}/FilesTabWidget
+    ${CMAKE_CURRENT_SOURCE_DIR}/ui/ToolsTabWidget
+    ${CMAKE_CURRENT_SOURCE_DIR}/ui/FilesTabWidget
 )
 
-file(GLOB_RECURSE PHOICONS_FILES
-    "resources/icons/phoicons/*.svg"
-    "resources/icons/phoicons/*.theme"
-)
-
-qt_add_resources(${PROJECT_NAME} "phoicons_icons"
-    PREFIX "/icons"
-    BASE "resources/icons"
-    FILES ${PHOICONS_FILES}
-)
 
 # - - Libs - -
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/libs/CodeEditor/ ${CMAKE_BINARY_DIR}/libs/CodeEditor/)
@@ -128,6 +129,9 @@ if(WIN32 AND WINDEPLOYQT_EXECUTABLE)
     )
 endif()
 
+if(QT_VERSION VERSION_LESS 6.1.0)
+  set(BUNDLE_ID_OPTION MACOSX_BUNDLE_GUI_IDENTIFIER com.example.${PROJECT_NAME})
+endif()
 set_target_properties(${PROJECT_NAME} PROPERTIES
     ${BUNDLE_ID_OPTION}
     MACOSX_BUNDLE_BUNDLE_VERSION ${PROJECT_VERSION}

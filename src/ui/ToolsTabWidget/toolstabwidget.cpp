@@ -6,8 +6,8 @@
 
 #include "ui/ToolsTabWidget/ToolTab.h"
 #include "core/file/FileDataBuffer.h"
-#include "ui/ToolsTabWidget/ToolTabFactory.h"
-#include "ui/ToolsTabWidget/toolstabwidget.h"
+#include "core/ToolsRegistry.h"
+#include "toolstabwidget.h"
 
 ToolsTabWidget::ToolsTabWidget(QWidget *parent, QString path)
     : QTabWidget(parent)
@@ -21,9 +21,7 @@ ToolsTabWidget::ToolsTabWidget(QWidget *parent, QString path)
 
     m_sharedBuffer->openFile(m_filePath);
 
-    auto& toolFactory = ToolTabFactory::instance();
-
-    for (const auto& descriptor : toolFactory.availableTabs()) {
+    for (const auto& descriptor : ToolsRegistry::instance().availableFileTools()) {
         if (descriptor.autoOpen) {
             createToolTab(descriptor.id);
         }
@@ -32,8 +30,8 @@ ToolsTabWidget::ToolsTabWidget(QWidget *parent, QString path)
     if (this->count() > 0) {
         ToolTab* tab = dynamic_cast<ToolTab*>(this->widget(0));
         if (tab) {
-            qDebug() << "ToolsTabWidget ctor: preloading first tab" << tab << tab->toolName();
-            tab->setTabData();
+            qDebug() << "ToolsTabWidget ctor: preloading first tab" << tab << tab->name();
+            tab->updateData();
             tab->setProperty("tabDataLoaded", true);
         }
     }
@@ -47,8 +45,8 @@ ToolsTabWidget::ToolsTabWidget(QWidget *parent, QString path)
             return;
 
         if (!tab->property("tabDataLoaded").toBool()) {
-            qDebug() << "ToolsTabWidget currentChanged: loading tab index=" << index << " ptr=" << tab << " name=" << tab->toolName();
-            tab->setTabData();
+            qDebug() << "ToolsTabWidget currentChanged: loading tab index=" << index << " ptr=" << tab << " name=" << tab->name();
+            tab->updateData();
             tab->setProperty("tabDataLoaded", true);
         }
 
@@ -91,13 +89,13 @@ ToolTab* ToolsTabWidget::findToolTab(const QString& toolId) const
 
 ToolTab* ToolsTabWidget::createToolTab(const QString& toolId)
 {
-    const auto descriptor = ToolTabFactory::instance().descriptor(toolId);
-    if (!descriptor.isValid()) {
+    const auto descriptor = ToolsRegistry::instance().descriptor(toolId);
+    if (!descriptor.isValid() || descriptor.kind != ToolKind::FileTab) {
         qWarning() << "ToolsTabWidget: unknown tool tab id" << toolId;
         return nullptr;
     }
 
-    ToolTab* tab = ToolTabFactory::instance().create(toolId, m_sharedBuffer);
+    ToolTab* tab = ToolsRegistry::instance().createFileTool(toolId, m_sharedBuffer);
     if (!tab) {
         qWarning() << "ToolsTabWidget: failed to create tab for id" << toolId;
         return nullptr;
@@ -106,10 +104,9 @@ ToolTab* ToolsTabWidget::createToolTab(const QString& toolId)
     tab->setFile(m_filePath);
     tab->setProperty("toolTabId", descriptor.id);
     tab->setProperty("toolTabOrder", descriptor.order);
-    tab->setProperty("toolTabClosable", descriptor.group == ToolTabGroup::Other);
+    tab->setProperty("toolTabClosable", descriptor.fileGroup == FileToolGroup::Other);
     tab->setProperty("tabDataLoaded", false);
 
-    connect(tab, &ToolTab::refreshDataAllTabsSignal, this, &ToolsTabWidget::refreshDataAllTabs);
     connect(tab, &ToolTab::modifyData, this, &ToolsTabWidget::setupStar);
     connect(tab, &ToolTab::dataEqual, this, &ToolsTabWidget::removeStar);
     connect(tab, &ToolTab::statusBarInfoChanged, this, [this, tab](const QString& info) {
@@ -122,8 +119,12 @@ ToolTab* ToolsTabWidget::createToolTab(const QString& toolId)
     connect(this, &ToolsTabWidget::setTabReplaceSignal, tab, &ToolTab::setTabReplaceSlot);
     connect(this, &ToolsTabWidget::setTabWidthSignal, tab, &ToolTab::setTabWidthSlot);
 
+    connect(this, &ToolsTabWidget::setWordWrapSignal, tab, &ToolTab::setWordWrapSlot);
+    connect(this, &ToolsTabWidget::setTabReplaceSignal, tab, &ToolTab::setTabReplaceSlot);
+    connect(this, &ToolsTabWidget::setTabWidthSignal, tab, &ToolTab::setTabWidthSlot);
+
     int insertIndex = count();
-    if (descriptor.group == ToolTabGroup::Always) {
+    if (descriptor.fileGroup == FileToolGroup::Always) {
         for (int index = 0; index < count(); ++index) {
             QWidget* existingWidget = widget(index);
             const bool existingClosable = existingWidget->property("toolTabClosable").toBool();
@@ -135,7 +136,7 @@ ToolTab* ToolsTabWidget::createToolTab(const QString& toolId)
         }
     }
 
-    insertTab(insertIndex, tab, tab->toolIcon(), tab->toolName());
+    insertTab(insertIndex, tab, tab->icon(), tab->name());
     updateCloseButtons();
     return tab;
 }
@@ -152,7 +153,7 @@ ToolTab* ToolsTabWidget::openToolTab(const QString& toolId, bool activate)
     }
 
     if (!tab->property("tabDataLoaded").toBool()) {
-        tab->setTabData();
+        tab->updateData();
         tab->setProperty("tabDataLoaded", true);
     }
 
@@ -163,14 +164,6 @@ ToolTab* ToolsTabWidget::openToolTab(const QString& toolId, bool activate)
     return tab;
 }
 
-void ToolsTabWidget::refreshDataAllTabs(){
-    for (int tabIndex = 0; tabIndex < this->count(); tabIndex++){
-        if (tabIndex != this->currentIndex()){
-            ToolTab* tab = dynamic_cast<ToolTab*>(this->widget(tabIndex));
-            tab->setTabData();
-        }
-    }
-}
 
 void ToolsTabWidget::closeToolTab(int index)
 {
@@ -185,80 +178,24 @@ void ToolsTabWidget::closeToolTab(int index)
 }
 
 void ToolsTabWidget::saveCurrentTabData(){
-    ToolTab* tab = dynamic_cast<ToolTab*>(currentWidget());
-    if (tab) tab->saveTabData();
+    if (m_sharedBuffer && m_sharedBuffer->isModified()) {
+        m_sharedBuffer->saveToFile(m_filePath);
+    }
 }
 
 void ToolsTabWidget::removeStar(){
-
-    qDebug() << "ToolsTabWidget: removeStar() this=" << this << " sender=" << sender() << " currentIndex=" << currentIndex() << " count=" << count();
-
-    // remove star at sender
-    QObject* obj = sender();
-    QWidget* widget = qobject_cast<QWidget*>(obj);
-
-    if (!widget) {
-        qWarning() << "ToolsTabWidget: removeStar(): sender is not QWidget";
-        return;
-    }
-
-    int index = indexOf(widget);
-    if (index < 0) {
-        qWarning() << "ToolsTabWidget: removeStar(): widget not found in tab widget" << widget;
-        return;
-    }
-
-    QString text = tabText(index);
-    if (text.endsWith('*')) text.chop(1);
-    setTabText(index, text);
-
-    int toolCount_WithoutModIndicator = 0;
-    for (int tabIndex = 0; tabIndex < this->count(); tabIndex++){
-        if (tabIndex != this->currentIndex()){
-            ToolTab* tab = dynamic_cast<ToolTab*>(this->widget(tabIndex));
-            if (!tab) {
-                qWarning() << "ToolsTabWidget: removeStar(): null tab at index" << tabIndex;
-                continue;
-            }
-            qDebug() << "ToolsTabWidget: removeStar(): " << tab->toolName();
-            if (!tab->getModifyIndicator()) {
-                qDebug() << "ToolsTabWidget: removeStar(): toolCount_WithoutModIndicator++";
-                toolCount_WithoutModIndicator++;
-            }
+    for (int tabIndex = 0; tabIndex < count(); ++tabIndex) {
+        ToolTab* tab = qobject_cast<ToolTab*>(widget(tabIndex));
+        if (tab && tab->getModifyIndicator()) {
+            return;
         }
     }
 
-    qDebug() << "ToolsTabWidget: removeStar(): " << toolCount_WithoutModIndicator << " : " << this->count();
-
-    if (toolCount_WithoutModIndicator == (this->count()-1)) {
-        qDebug() << "ToolsTabWidget: removeStar(): removeStarSignal";
         emit removeStarSignal();
-        qDebug() << "ToolsTabWidget: removeStar(): removeStarSignal returned";
-    }
-
 }
 
 void ToolsTabWidget::setupStar(){
-
-    qDebug() << "ToolsTabWidget: setupStar()";
-
-    // setup star on tab
-    QObject* obj = sender();
-    QWidget* widget = qobject_cast<QWidget*>(obj);
-
-    if (!widget) return;
-
-    int index = indexOf(widget);
-    if (index < 0) return;
-
-    QString text = tabText(index);
-    if (!text.endsWith("*")){
-        setTabText(index, text + "*");
-    }
-
-    // signal "setup star" to up
     emit setupStarSignal();
-
 }
 
 void ToolsTabWidget::setWordWrapSlot(bool checked){

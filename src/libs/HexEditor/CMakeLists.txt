@@ -2,6 +2,7 @@ project(HexEditor)
 
 option(QHEXVIEW_ENABLE_DIALOGS "BuiltIn dialogs" ON)
 
+find_package(Qt6 REQUIRED COMPONENTS Widgets)
 add_library(${PROJECT_NAME} STATIC)
 
 set_target_properties(${PROJECT_NAME}

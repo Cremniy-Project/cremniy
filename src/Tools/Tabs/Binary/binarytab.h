@@ -30,15 +30,14 @@ protected slots:
 public:
     explicit BinaryTab(FileDataBuffer* buffer, QWidget *parent = nullptr);
 
-    QString toolName() const override { return "Binary"; };
-    QIcon toolIcon() const override { return QIcon(":/icons/binary.png"); };
+    QString name() const override { return "Binary"; };
+    QIcon icon() const override { return QIcon(":/icons/binary.png"); };
 
 public slots:
 
     // From Parrent Class: ToolTab
     void setFile(QString filepath) override;
-    void setTabData() override;
-    void saveTabData() override;
+    void updateData() override;
 
     void pageModifyDataSlot();
 

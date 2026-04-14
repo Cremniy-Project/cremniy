@@ -67,8 +67,8 @@ private:
 public:
     explicit CodeEditorTab(FileDataBuffer* buffer, QWidget *parent = nullptr);
 
-    QString toolName() const override { return "Code"; };
-    QIcon toolIcon() const override { return QIcon(":/icons/code.png"); };
+    QString name() const override { return "Code"; };
+    QIcon icon() const override { return QIcon(":/icons/code.png"); };
 
 signals:
 
@@ -88,8 +88,7 @@ public slots:
 
     // From Parrent Class: ToolTab
     void setFile(QString filepath) override;
-    void setTabData() override;
-    void saveTabData() override;
+    void updateData() override;
 
     void setWordWrapSlot(bool checked) override;
     void setTabReplaceSlot(bool checked) override;

@@ -75,9 +75,38 @@ QListView, QTreeView, QTableView {
     alternate-background-color: #0a0f18;
 }
 
+QHeaderView::section {
+    background-color: #262626;
+    color: #ffffff;
+    border: 1px solid #1f1f1f;
+    padding: 4px;
+}
+
+QTableCornerButton::section {
+    background-color: #262626;
+    border: 1px solid #1f1f1f;
+}
+
 /* Tabs */
 QTabWidget::pane {
     border: 1px solid #262626;
+}
+
+QTabBar::tab {
+    background: #262626;
+    color: #ffffff;
+    border: 1px solid #1f1f1f;
+    padding: 5px;
+    min-width: 80px;
+}
+
+QTabBar::tab:selected {
+    background: #1f1f1f;
+    border-bottom: 2px solid #2626d5;
+}
+
+QTabBar::tab:hover:!selected {
+    background: #333333;
 }
 
 #filesTabWidget QTabBar::close-button {

@@ -8,7 +8,7 @@ class AsciiCharsRef : public ReferenceWindow
 {
     Q_OBJECT
 public:
-    explicit AsciiCharsRef();
+    explicit AsciiCharsRef(QWidget* parent = nullptr);
     QString RefWinName() override { return "ASCII / Unicode Characters"; }
 
 private:

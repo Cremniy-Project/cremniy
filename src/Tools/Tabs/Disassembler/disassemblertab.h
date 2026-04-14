@@ -32,8 +32,8 @@ public:
     explicit DisassemblerTab(FileDataBuffer* buffer, QWidget *parent = nullptr);
     ~DisassemblerTab();
 
-    QString toolName() const override { return "Disassembler"; };
-    QIcon toolIcon() const override { return QIcon(":/icons/dasm.png"); };
+    QString name() const override { return "Disassembler"; };
+    QIcon icon() const override { return QIcon(":/icons/dasm.png"); };
 
     void saveToFile(QString path) {}
     void setTabData(QByteArray &data);
@@ -61,8 +61,7 @@ public slots:
 
     // From Parrent Class: ToolTab
     void setFile(QString filepath) override;
-    void setTabData() override;
-    void saveTabData() override;
+    void updateData() override;
 
     void setWordWrapSlot(bool checked) override {};
     void setTabReplaceSlot(bool checked) override {};

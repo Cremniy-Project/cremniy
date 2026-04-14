@@ -7,10 +7,10 @@
 #include <QTableWidget>
 #include "formatpagefactory.h"
 #include "formatpage.h"
-#include "ui/ToolsTabWidget/ToolTabFactory.h"
+#include "core/ToolsRegistry.h"
 
 static const bool registeredBinaryTab =
-    registerAlwaysToolTab<BinaryTab>(QStringLiteral("binary"), QStringLiteral("Binary"), 200);
+    registerAlwaysFileTool<BinaryTab>(QStringLiteral("binary"), QStringLiteral("Binary"), FileToolOrder::Binary);
 
 namespace {
 void syncCurrentFormatPage(QStackedWidget* pageView, FileDataBuffer* dataBuffer)
@@ -132,14 +132,14 @@ void BinaryTab::setFile(QString filepath){
     m_fileContext = new FileContext(filepath);
 }
 
-void BinaryTab::setTabData(){
-    qDebug() << "HexViewTab: setTabData(): start";
+void BinaryTab::updateData(){
+    qDebug() << "HexViewTab: updateData(): start";
 
     m_syncingBufferData = true;
     if (auto* currentPage = dynamic_cast<FormatPage*>(pageView->currentWidget()); currentPage) {
-        qDebug() << "HexViewTab: setTabData(): start set page data for " << currentPage->pageName();
+        qDebug() << "HexViewTab: updateData(): start set page data for " << currentPage->pageName();
         currentPage->setSharedBuffer(m_dataBuffer);
-        qDebug() << "HexViewTab: setTabData(): success set page data for " << currentPage->pageName();
+        qDebug() << "HexViewTab: updateData(): success set page data for " << currentPage->pageName();
     }
     m_syncingBufferData = false;
     m_pageDataDirty = false;
@@ -151,7 +151,7 @@ void BinaryTab::setTabData(){
         setModifyIndicator(false);
         emit dataEqual();
     }
-    qDebug() << "HexViewTab: setTabData(): success";
+    qDebug() << "HexViewTab: updateData(): success";
 };
 
 void BinaryTab::onDataChanged()
@@ -160,7 +160,7 @@ void BinaryTab::onDataChanged()
         return;
 
     m_pageDataDirty = true;
-    setTabData();
+    updateData();
 }
 
 void BinaryTab::onSelectionChanged(qint64 pos, qint64 length)
@@ -180,19 +180,6 @@ void BinaryTab::onSelectionChanged(qint64 pos, qint64 length)
     m_updatingSelection = false;
 }
 
-void BinaryTab::saveTabData() {
-    qDebug() << "HexViewTab: saveTabData";
-
-    if (!m_dataBuffer->isModified())
-        return;
-
-    if (!m_dataBuffer->saveToFile(m_fileContext->filePath()))
-        return;
-    
-    setModifyIndicator(false);
-    emit dataEqual();
-    emit refreshDataAllTabsSignal();
-}
 
 void BinaryTab::openFindDialog()
 {

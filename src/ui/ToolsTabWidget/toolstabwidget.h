@@ -36,7 +36,6 @@ private:
 public slots:
     void closeToolTab(int index);
     void saveCurrentTabData();
-    void refreshDataAllTabs();
 
     void removeStar();
     void setupStar();

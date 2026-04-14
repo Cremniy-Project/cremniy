@@ -38,26 +38,17 @@ public:
     explicit ToolTab(FileDataBuffer* buffer, QWidget* parent = nullptr)
         : QWidget(parent), m_dataBuffer(buffer)
     {
-        // Подписываемся на сигналы буфера
-        connect(m_dataBuffer, &FileDataBuffer::byteChanged,
-            this, &ToolTab::onByteChanged);
-        connect(m_dataBuffer, &FileDataBuffer::bytesChanged,
-            this, &ToolTab::onBytesChanged);
-        connect(m_dataBuffer, &FileDataBuffer::selectionChanged,
-            this, &ToolTab::onSelectionChanged);
-        connect(m_dataBuffer, &FileDataBuffer::dataChanged,
-            this, &ToolTab::onDataChanged);
     }
 
     /**
      * @brief Получить название инструмента для вкладки
      */
-    virtual QString toolName() const = 0;
+    virtual QString name() const = 0;
 
     /**
      * @brief Получить лого инструмента для вкладки
      */
-    virtual QIcon toolIcon() const = 0;
+    virtual QIcon icon() const = 0;
 
     /**
      * @brief Получить значение индикатора изменений
@@ -118,12 +109,8 @@ public slots:
     /**
      * @brief Установить данные из файла во вкладку
      */
-    virtual void setTabData() = 0;
+    virtual void updateData() = 0;
 
-    /**
-     * @brief Сохраняет данные из вкладки в файл
-     */
-    virtual void saveTabData() = 0;
 
     /**
      * @brief Включение или отключение Word Wrap в зависимости от checked

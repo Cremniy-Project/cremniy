@@ -6,6 +6,7 @@ class ReferenceWindow : public QWidget
 {
     Q_OBJECT
 public:
+    explicit ReferenceWindow(QWidget* parent = nullptr) : QWidget(parent) {}
 
     virtual QString RefWinName() = 0;
 

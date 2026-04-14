@@ -32,10 +32,10 @@
 #include "core/settings/appsettings.h"
 #include "instructionhelpservice.h"
 #include "disasm/disasmtexthighlighter.h"
-#include "ui/ToolsTabWidget/ToolTabFactory.h"
+#include "core/ToolsRegistry.h"
 
 static const bool registeredDisassemblerTab =
-    registerOtherToolTab<DisassemblerTab>(QStringLiteral("disassembler"), QStringLiteral("Disassembler"));
+    registerOtherFileTool<DisassemblerTab>(QStringLiteral("disassembler"), QStringLiteral("Disassembler"));
 
 static QString normalizeBytes(const QString &bytes)
 {
@@ -271,22 +271,11 @@ void DisassemblerTab::setFile(QString filepath){
     m_fileContext = new FileContext(filepath);
 }
 
-void DisassemblerTab::setTabData()
+void DisassemblerTab::updateData()
 {
     startDisassembly();
 }
 
-void DisassemblerTab::saveTabData()
-{
-    if (!m_dataBuffer->isModified())
-        return;
-
-    if (!m_dataBuffer->saveToFile(m_fileContext->filePath()))
-        return;
-
-    setModifyIndicator(false);
-    emit dataEqual();
-}
 
 void DisassemblerTab::onSelectionChanged(qint64 pos, qint64 length)
 {

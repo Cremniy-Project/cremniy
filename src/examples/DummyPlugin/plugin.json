@@ -1,0 +1,8 @@
+{
+  "MetaData": {
+    "name": "DummyToolsPlugin",
+    "version": "0.1.0",
+    "author": "Cremniy Community",
+    "description": "An example plugin that adds a simple dummy tool to the registry."
+  }
+}

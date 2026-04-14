@@ -2,7 +2,7 @@
 #define IDEWINDOW_H
 
 #include "ui/FilesTabWidget/filestabwidget.h"
-#include "widgets//filetreeview.h"
+#include "widgets/filetreeview.h"
 #include "core/settings/exclusionfilterproxymodel.h"
 #include <QMainWindow>
 #include <qboxlayout.h>

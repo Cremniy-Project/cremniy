@@ -1,66 +1,77 @@
 # Developer Guide
 
-The project is being rebuilt into a modular architecture.
-
-Currently, modularity is implemented only for **Tool Tabs**. 
-
+The project uses a decentralized modular architecture based on the **ToolsRegistry**.
 
 ## Project structure
 
+- `app/` - main windows and application logic
+- `core/` - base interfaces and core logic (File management, Settings, Registry)
+- `Tools/` - functional modules: tabs, windows, and references
+- `libs/` - shared libraries used across the project
+- `ui/` - common UI components
 
-- `app/` - main windows for display
-- `core/` - base interfaces
-- `ToolTabs/` - modules: tool tabs
-- `widgets/` - reusable widgets
-- `utils/` - helper code
+---
 
+## Tool Kinds
 
+Cremniy supports three types of tools (defined in `ToolKind`):
 
-## Tool Tab for working with a file
+1.  **FileTab**: A tab tied to an open file (e.g., Hex viewer, Code editor). Displayed in the main workspace.
+2.  **Window**: An independent tool window (e.g., Calculator, Data Converter). Found in "Tools -> Window Tools" menu.
+3.  **Reference**: Informational modules (e.g., ASCII Table). Found in "References" menu.
 
-### Description
+---
 
-A **ToolTab** is a tool tab for the user to work with a file. Examples of **ToolTab**:
-- **Code Editor**<br>
-<img width="400" height="300" alt="code_tooltab" src="https://github.com/user-attachments/assets/f4d9d9c5-acbb-42ee-a3e1-a2d773c94d89" /><br>
-- **HEX Editor**<br>
-<img width="400" height="300" alt="hex_tooltab" src="https://github.com/user-attachments/assets/cb66ffa9-1852-4200-809e-77ece6687d32" /><br>
-- **Disassembler**<br>
-<img width="400" height="300" alt="dasm_tooltab" src="https://github.com/user-attachments/assets/d72c642b-9b02-4dc8-8f03-0224490b4d3e" /><br>
+## Registering a Module
 
-Each **ToolTab** is an independent module and is registered through the **ToolTabFactory** component.
+Modules register themselves automatically using static initialization. There is no need to modify core registry files.
 
-### Operation of tool tabs
+### 1. Adding a File Tab
 
-- All **ToolTab** inherit from the `ToolTab` class
-- Each **ToolTab** is registered in `ToolTabFactory`
-- `ToolTabWidget` automatically loads all **ToolTab** through `ToolTabFactory`
+Tabs inherit from `ToolTab` and get access to `FileDataBuffer`.
 
-```
-ToolTab (interface)
-    ↓
-Module (CodeEditorTab, HexEditorTab, ...)
-    ↓
-registerTab()
-    ↓
-ToolTabFactory
-    ↓
-ToolTabWidget → create() → addTab()
+```cpp
+// In the plugin's .cpp file
+static const bool registeredMyTab =
+    registerAlwaysFileTool<MyTabClass>(
+        "unique_id",          // System ID
+        "Display Name",       // Menu name
+        FileToolOrder::Code   // Display order
+    );
 ```
 
-Registration occurs automatically when the application starts via `static initialization` (global static objects).
+### 2. Adding a Window Tool
 
-### Adding a tool tab
+Independent tools for general tasks.
 
-1. Create a new directory in `ToolTabs/` for the tool
-2. Create a class inheriting `ToolTab`
-3. Implement `toolName()` and `toolIcon()`
-4. Register the tool in `ToolTabFactory`
-5. Add `CMakeLists.txt`
+```cpp
+// In the tool's .cpp file
+static const bool registeredMyWindow =
+    registerWindowTool("unique_id", "Calculator", [](QWidget* parent) {
+        auto* dlg = new MyWindowDialog(parent);
+        dlg->setAttribute(Qt::WA_DeleteOnClose);
+        dlg->show();
+    });
+```
 
-### Rules
+### 3. Adding a Reference Tool
 
-- Modules **must not depend** on each other directly
-- It is forbidden to use includes like `../../` or `include/`
-- All dependencies are connected **through CMake**
-- ToolTab is the **only** interaction point with the tabs
+Static informational windows.
+
+```cpp
+// In the reference's .cpp file
+static const bool registeredMyRef =
+    registerReferenceTool<MyRefWindow>(
+        "unique_id",
+        "ASCII Table"
+    );
+```
+
+---
+
+## Rules
+
+- Modules **must not depend** on each other directly.
+- Use the **central registry** to open windows or create tabs.
+- All dependencies are managed **through CMake**.
+- All data operations must go through **FileDataBuffer** to ensure synchronization between tabs.
