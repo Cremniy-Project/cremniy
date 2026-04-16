@@ -68,6 +68,8 @@ public:
 
     QIcon icon() const override { return QIcon(":/icons/code.png"); };
 
+    void setFileDataBuffer(FileDataBuffer* newFileDataBuffer) override;
+
 signals:
 
     /**

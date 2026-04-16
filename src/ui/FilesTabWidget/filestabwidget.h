@@ -2,6 +2,7 @@
 #define FILESTABWIDGET_H
 
 #include <QTabWidget>
+#include "core/modules/ModuleManager.h"
 #include "widgets/filetab.h"
 
 class FilesTabWidget : public QTabWidget {
@@ -38,6 +39,7 @@ signals:
     void setTabReplaceSignal(bool checked);
     void setTabWidthSignal(int width);
     void statusBarInfoChanged(const QString& info);
+    void openTabModule(TabModuleDescription desc);
 };
 
 #endif // FILESTABWIDGET_H

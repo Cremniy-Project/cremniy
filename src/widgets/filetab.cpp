@@ -25,6 +25,8 @@ FileTab::FileTab(QWidget* parent, QString path)
     connect(this, &FileTab::setTabReplaceSignal, m_tooltabWidget, &ToolsTabWidget::setTabReplaceSlot);
     connect(this, &FileTab::setTabWidthSignal, m_tooltabWidget, &ToolsTabWidget::setTabWidthSlot);
 
+    connect(this, &FileTab::openTabModule, m_tooltabWidget, &ToolsTabWidget::openTabModule);
+
 }
 
 void FileTab::setPinned(bool pinned){

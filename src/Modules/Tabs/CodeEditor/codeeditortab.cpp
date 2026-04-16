@@ -22,6 +22,7 @@ static bool registered = []() {
 CodeEditorTab::CodeEditorTab(QWidget* parent)
     : TabBase(parent)
 {
+
     auto* rootLayout = new QVBoxLayout(this);
     rootLayout->setContentsMargins(0, 0, 0, 0);
     rootLayout->setSpacing(0);
@@ -61,9 +62,7 @@ CodeEditorTab::CodeEditorTab(QWidget* parent)
 
     m_searchBar->hide();
     rootLayout->addWidget(m_searchBar);
-
     m_codeEditorWidget = new CustomCodeEditor(this);
-
     m_overlayWidget = new QWidget(this);
     auto overlayLayout = new QVBoxLayout(m_overlayWidget);
     overlayLayout->setAlignment(Qt::AlignCenter);
@@ -117,16 +116,6 @@ CodeEditorTab::CodeEditorTab(QWidget* parent)
                 .arg(m_currentLang));
     });
 
-    connect(m_codeEditorWidget, &CustomCodeEditor::contentsChanged, this, [this]() {
-        if (m_dataBuffer->isModified()) {
-            setModifyIndicator(true);
-            emit modifyData();
-        } else {
-            setModifyIndicator(false);
-            emit dataEqual();
-        }
-    });
-
     connect(m_codeEditorWidget, &CustomCodeEditor::modificationChanged, this, [this](bool modified) {
         setModifyIndicator(modified);
         if (modified)
@@ -146,6 +135,31 @@ CodeEditorTab::CodeEditorTab(QWidget* parent)
     connect(m_findNextShortcut, &QShortcut::activated, this, [this]() { findNext(true); });
     connect(m_findPreviousShortcut, &QShortcut::activated, this, [this]() { findNext(false); });
     connect(m_goToLineShortcut, &QShortcut::activated, this, &CodeEditorTab::openGoToLineDialog);
+}
+
+void CodeEditorTab::setFileDataBuffer(FileDataBuffer* newFileDataBuffer){
+    m_dataBuffer = newFileDataBuffer;
+
+    connect(m_dataBuffer, &FileDataBuffer::byteChanged,
+            this, &CodeEditorTab::onByteChanged);
+    connect(m_dataBuffer, &FileDataBuffer::bytesChanged,
+            this, &CodeEditorTab::onBytesChanged);
+    connect(m_dataBuffer, &FileDataBuffer::selectionChanged,
+            this, &CodeEditorTab::onSelectionChanged);
+    connect(m_dataBuffer, &FileDataBuffer::dataChanged,
+            this, &CodeEditorTab::onDataChanged);
+
+    connect(m_codeEditorWidget, &CustomCodeEditor::contentsChanged, this, [this]() {
+        if (m_dataBuffer->isModified()) {
+            setModifyIndicator(true);
+            emit modifyData();
+        } else {
+            setModifyIndicator(false);
+            emit dataEqual();
+        }
+    });
+
+    m_codeEditorWidget->setBuffer(newFileDataBuffer);
 }
 
 void CodeEditorTab::openFindDialog()

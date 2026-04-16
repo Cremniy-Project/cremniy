@@ -1,6 +1,7 @@
 #ifndef FILETAB_H
 #define FILETAB_H
 
+#include "core/modules/ModuleManager.h"
 #include "ui/ToolsTabWidget/toolstabwidget.h"
 #include <QWidget>
 
@@ -41,6 +42,8 @@ signals:
     void setTabWidthSignal(int width);
 
     void statusBarInfoChanged(const QString& info);
+
+    void openTabModule(TabModuleDescription desc);
 
 };
 

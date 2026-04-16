@@ -21,6 +21,8 @@ ToolsTabWidget::ToolsTabWidget(QWidget *parent, QString path)
 
     createAlwaysTabs();
 
+
+
     if (this->count() > 0) {
         TabBase* tab = dynamic_cast<TabBase*>(this->widget(0));
         if (tab) {
@@ -81,28 +83,39 @@ void ToolsTabWidget::createAlwaysTabs()
     const QVector<TabModuleDescription>& tabsDesc = ModuleManager::instance().getTabsByGroup(m_alwaysVisibleGroup);
 
     for (const TabModuleDescription& desc: tabsDesc){
-        TabBase* tab = desc.creator();
-        if (!tab) return;
-        tab->setFile(m_filePath);
-        tab->setProperty("toolTabOrder", desc.position);
-        tab->setProperty("toolTabClosable", false);
-        tab->setProperty("tabDataLoaded", false);
+        this->createTab(desc, true, false);
+    }
+    if (count() > 0) this->setCurrentIndex(0);
+}
 
-        connect(tab, &TabBase::refreshDataAllTabsSignal, this, &ToolsTabWidget::refreshDataAllTabs);
-        connect(tab, &TabBase::modifyData, this, &ToolsTabWidget::setupStar);
-        connect(tab, &TabBase::dataEqual, this, &ToolsTabWidget::removeStar);
-        connect(tab, &TabBase::statusBarInfoChanged, this, [this, tab](const QString& info) {
-            tab->setProperty("lastStatusBarInfo", info);
-            if (currentWidget() == tab)
-                emit statusBarInfoChanged(info);
-        });
+void ToolsTabWidget::createTab(const TabModuleDescription& desc, bool isAlways, bool tabClosable){
 
-        connect(this, &ToolsTabWidget::setWordWrapSignal, tab, &TabBase::setWordWrapSlot);
-        connect(this, &ToolsTabWidget::setTabReplaceSignal, tab, &TabBase::setTabReplaceSlot);
-        connect(this, &ToolsTabWidget::setTabWidthSignal, tab, &TabBase::setTabWidthSlot);
+    TabBase* tab = desc.creator();
+    if (!tab) return;
 
-        int insertIndex = count();
+    tab->setFile(m_filePath);
+    tab->setFileDataBuffer(m_sharedBuffer);
 
+    tab->setProperty("toolTabOrder", desc.position);
+    tab->setProperty("toolTabClosable", tabClosable);
+    tab->setProperty("tabDataLoaded", false);
+
+    connect(tab, &TabBase::refreshDataAllTabsSignal, this, &ToolsTabWidget::refreshDataAllTabs);
+    connect(tab, &TabBase::modifyData, this, &ToolsTabWidget::setupStar);
+    connect(tab, &TabBase::dataEqual, this, &ToolsTabWidget::removeStar);
+    connect(tab, &TabBase::statusBarInfoChanged, this, [this, tab](const QString& info) {
+        tab->setProperty("lastStatusBarInfo", info);
+        if (currentWidget() == tab)
+            emit statusBarInfoChanged(info);
+    });
+
+    connect(this, &ToolsTabWidget::setWordWrapSignal, tab, &TabBase::setWordWrapSlot);
+    connect(this, &ToolsTabWidget::setTabReplaceSignal, tab, &TabBase::setTabReplaceSlot);
+    connect(this, &ToolsTabWidget::setTabWidthSignal, tab, &TabBase::setTabWidthSlot);
+
+    int insertIndex = count();
+
+    if (isAlways){
         for (int index = 0; index < count(); ++index) {
             QWidget* existingWidget = widget(index);
             const bool existingClosable = existingWidget->property("toolTabClosable").toBool();
@@ -112,10 +125,9 @@ void ToolsTabWidget::createAlwaysTabs()
                 break;
             }
         }
-
-        insertTab(insertIndex, tab, tab->icon(), desc.name);
     }
 
+    insertTab(insertIndex, tab, tab->icon(), desc.name);
     updateCloseButtons();
 }
 
@@ -195,4 +207,10 @@ void ToolsTabWidget::setTabReplaceSlot(bool checked){
 void ToolsTabWidget::setTabWidthSlot(int width){
     qDebug("signal: tab width");
     emit setTabWidthSignal(width);
+}
+
+void ToolsTabWidget::openTabModule(TabModuleDescription desc){
+    qDebug() << "ToolsTabWidget::openTabModule(): " << desc.name;
+    this->createTab(desc);
+    if (count() > 0) this->setCurrentIndex(count()-1);
 }

@@ -31,7 +31,9 @@ ToolsMenu::ToolsMenu() : BaseMenu("Tools") {
             QAction* newAction = new QAction(desc.name, this);
             groupMenu->addAction(newAction);
 
-            // xz connect
+            connect(newAction, &QAction::triggered, this, [this, desc](){
+                emit openTabModule(desc);
+            });
 
         }
 
@@ -70,4 +72,8 @@ ToolsMenu::ToolsMenu() : BaseMenu("Tools") {
 
     this->addMenu(tabModulesMenu);
     this->addMenu(windowModulesMenu);
+}
+
+void ToolsMenu::setupConnections(IDEWindow* ideWind){
+    connect(this, &ToolsMenu::openTabModule, ideWind, &IDEWindow::openTabModule);
 }

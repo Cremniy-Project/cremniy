@@ -37,17 +37,7 @@ public:
      */
     explicit TabBase(QWidget* parent = nullptr)
         : QWidget(parent)
-    {
-        // Подписываемся на сигналы буфера
-        connect(m_dataBuffer, &FileDataBuffer::byteChanged,
-            this, &TabBase::onByteChanged);
-        connect(m_dataBuffer, &FileDataBuffer::bytesChanged,
-            this, &TabBase::onBytesChanged);
-        connect(m_dataBuffer, &FileDataBuffer::selectionChanged,
-            this, &TabBase::onSelectionChanged);
-        connect(m_dataBuffer, &FileDataBuffer::dataChanged,
-            this, &TabBase::onDataChanged);
-    }
+    {}
 
     /**
      * @brief Получить лого инструмента для вкладки
@@ -73,8 +63,17 @@ public:
      *
      * @param newFileDataBuffer указатель на общий буффер
      */
-    void setFileDataBuffer(FileDataBuffer* newFileDataBuffer){
+    virtual void setFileDataBuffer(FileDataBuffer* newFileDataBuffer){
         m_dataBuffer = newFileDataBuffer;
+
+        connect(m_dataBuffer, &FileDataBuffer::byteChanged,
+                this, &TabBase::onByteChanged);
+        connect(m_dataBuffer, &FileDataBuffer::bytesChanged,
+                this, &TabBase::onBytesChanged);
+        connect(m_dataBuffer, &FileDataBuffer::selectionChanged,
+                this, &TabBase::onSelectionChanged);
+        connect(m_dataBuffer, &FileDataBuffer::dataChanged,
+                this, &TabBase::onDataChanged);
     }
 
 protected slots:

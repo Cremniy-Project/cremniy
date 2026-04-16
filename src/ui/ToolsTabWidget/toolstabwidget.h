@@ -1,6 +1,7 @@
 #ifndef TOOLTABWIDGET_H
 #define TOOLTABWIDGET_H
 
+#include "core/modules/ModuleManager.h"
 #include <QByteArray>
 #include <QString>
 #include <QTabWidget>
@@ -29,6 +30,7 @@ private:
     void loadStyle(QString path, QString name);
     void createAlwaysTabs();
     void updateCloseButtons();
+    void createTab(const TabModuleDescription& desc, bool isAlways = false, bool tabClosable = true);
     FileDataBuffer* m_sharedBuffer = nullptr;
     QString m_filePath;
 
@@ -43,6 +45,8 @@ public slots:
     void setWordWrapSlot(bool checked);
     void setTabReplaceSlot(bool checked);
     void setTabWidthSlot(int width);
+
+    void openTabModule(TabModuleDescription desc);
 
 signals:
     void removeStarSignal();

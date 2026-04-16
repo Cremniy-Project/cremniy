@@ -125,6 +125,8 @@ IDEWindow::IDEWindow(QString ProjectPath, QWidget *parent)
     connect(this, &IDEWindow::setWordWrapSignal, m_filesTabWidget, &FilesTabWidget::setWordWrapSlot);
     connect(this, &IDEWindow::setTabReplaceSignal, m_filesTabWidget, &FilesTabWidget::setTabReplaceSlot);
     connect(this, &IDEWindow::setTabWidthSignal, m_filesTabWidget, &FilesTabWidget::setTabWidthSlot);
+
+    connect(this, &IDEWindow::openTabModule, m_filesTabWidget, &FilesTabWidget::openTabModule);
 }
 
 IDEWindow::~IDEWindow()

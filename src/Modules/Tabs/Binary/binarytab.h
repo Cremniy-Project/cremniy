@@ -5,6 +5,7 @@
 #include <QWidget>
 #include <QIcon>
 #include <qfileinfo.h>
+#include <qlistwidget.h>
 #include <qstackedwidget.h>
 
 #include <core/modules/TabBase.h>
@@ -20,8 +21,10 @@ private:
     bool m_syncingBufferData = false;
     bool m_pageDataDirty = true;
     QShortcut* m_findShortcut = nullptr;
+    QListWidget* m_pageList;
 
     void openFindDialog();
+    void createPages();
 
 protected slots:
     // Обработчик изменения выделения из буфера
@@ -32,6 +35,8 @@ public:
     explicit BinaryTab(QWidget *parent = nullptr);
 
     QIcon icon() const override { return QIcon(":/icons/binary.png"); };
+
+    void setFileDataBuffer(FileDataBuffer* newFileDataBuffer) override;
 
 public slots:
 

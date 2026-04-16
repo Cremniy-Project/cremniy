@@ -35,7 +35,7 @@
 #include "core/modules/ModuleManager.h"
 
 static bool registered = []() {
-    ModuleManager::instance().registerTab("Disassembler", "Analyze", []() { return new DisassemblerTab(); }, 100);
+    ModuleManager::instance().registerTab("Disassembler", "", []() { return new DisassemblerTab(); }, 100);
     return true;
 }();
 

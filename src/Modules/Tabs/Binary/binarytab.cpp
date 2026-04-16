@@ -32,7 +32,7 @@ BinaryTab::BinaryTab(QWidget *parent)
     : TabBase{parent}
 {
     // - - Tab Widgets - -
-
+    qDebug() << "BinaryTab ctor start";
     // Create Layout
     auto mainHexTabLayout = new QHBoxLayout(this);
     mainHexTabLayout->setSpacing(0);
@@ -40,16 +40,57 @@ BinaryTab::BinaryTab(QWidget *parent)
     this->setLayout(mainHexTabLayout);
 
     // Create Tab Widgets
-    QListWidget* pageList = new QListWidget();
-    pageList->setObjectName("hexTabsList");
-    pageList->setFocusPolicy(Qt::NoFocus);
+    m_pageList = new QListWidget();
+    m_pageList->setObjectName("hexTabsList");
+    m_pageList->setFocusPolicy(Qt::NoFocus);
     pageView = new QStackedWidget();
 
     // Add TabWidgets in Layout
     mainHexTabLayout->addWidget(pageView);
-    mainHexTabLayout->addWidget(pageList);
+    mainHexTabLayout->addWidget(m_pageList);
 
-    // - - Create Pages - -
+    // - - End Configurate Tab Widgets - -
+
+    // find
+    m_findShortcut = new QShortcut(QKeySequence::Find, this);
+    connect(m_findShortcut, &QShortcut::activated, this, &BinaryTab::openFindDialog);
+}
+
+
+// - - override functions - -
+
+void BinaryTab::setFileDataBuffer(FileDataBuffer* newFileDataBuffer){
+    m_dataBuffer = newFileDataBuffer;
+
+    connect(m_dataBuffer, &FileDataBuffer::byteChanged,
+            this, &BinaryTab::onByteChanged);
+    connect(m_dataBuffer, &FileDataBuffer::bytesChanged,
+            this, &BinaryTab::onBytesChanged);
+    connect(m_dataBuffer, &FileDataBuffer::selectionChanged,
+            this, &BinaryTab::onSelectionChanged);
+    connect(m_dataBuffer, &FileDataBuffer::dataChanged,
+            this, &BinaryTab::onDataChanged);
+
+    createPages();
+
+    // TabList: select tab
+    connect(m_pageList, &QListWidget::currentRowChanged,
+            this, [this](int row) {
+                pageView->setCurrentIndex(row);
+                if (row >= 0)
+                    syncCurrentFormatPage(pageView, m_dataBuffer);
+                m_pageDataDirty = false;
+            });
+
+    connect(m_dataBuffer,
+            &FileDataBuffer::selectionChanged,
+            this,
+            &BinaryTab::onSelectionChanged
+            );
+}
+
+void BinaryTab::createPages(){
+
     auto& formatFactory = FormatPageFactory::instance();
 
     qDebug() << "FormatPageFactory constr: for id in avPages";
@@ -59,12 +100,14 @@ BinaryTab::BinaryTab(QWidget *parent)
 
         if (fpage) {
             pageView->addWidget(fpage);
-            pageList->addItem(fpage->pageName());
+            m_pageList->addItem(fpage->pageName());
 
             connect(fpage, &FormatPage::modifyData, this, &BinaryTab::pageModifyDataSlot);
             connect(fpage, &FormatPage::dataEqual, this, &TabBase::dataEqual);
-            connect(fpage, &FormatPage::pageDataChanged,
-                    this, [this](const QByteArray& data) {
+            connect(fpage,
+                    &FormatPage::pageDataChanged,
+                    this,
+                    [this](const QByteArray& data) {
                         if (m_syncingBufferData)
                             return;
 
@@ -80,50 +123,26 @@ BinaryTab::BinaryTab(QWidget *parent)
                             emit dataEqual();
                         }
                     });
-            
+
             // Forward status bar info from format page
             connect(fpage, &FormatPage::statusBarInfoChanged,
                     this, &BinaryTab::statusBarInfoChanged);
 
             // Подключаем сигнал выделения от страницы к буферу
-            connect(fpage, &FormatPage::selectionChanged,
-                    this, [this](qint64 pos, qint64 length){
+            connect(fpage,
+                    &FormatPage::selectionChanged,
+                    this,
+                    [this](qint64 pos, qint64 length){
                         if (m_updatingSelection) return; // Предотвращаем рекурсию
-                        
+
                         m_updatingSelection = true;
                         m_dataBuffer->setSelection(pos, length);
                         m_updatingSelection = false;
                     });
         }
     }
-
-    // - - End Configurate Tab Widgets - -
-
-    // Configurate
-    pageList->setCurrentRow(0);
-
-    // - - Connects - -
-
-    // TabList: select tab
-    connect(pageList, &QListWidget::currentRowChanged,
-            this, [this](int row) {
-                pageView->setCurrentIndex(row);
-                if (row >= 0)
-                    syncCurrentFormatPage(pageView, m_dataBuffer);
-                m_pageDataDirty = false;
-            });
-
-    m_findShortcut = new QShortcut(QKeySequence::Find, this);
-    connect(m_findShortcut, &QShortcut::activated, this, &BinaryTab::openFindDialog);
-
-    connect(m_dataBuffer, &FileDataBuffer::selectionChanged,
-            this, &BinaryTab::onSelectionChanged);
+    m_pageList->setCurrentRow(0);
 }
-
-
-// - - override functions - -
-
-// - public slots -
 
 void BinaryTab::pageModifyDataSlot(){
     setModifyIndicator(true);

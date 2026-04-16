@@ -1,6 +1,7 @@
 #ifndef IDEWINDOW_H
 #define IDEWINDOW_H
 
+#include "core/modules/ModuleManager.h"
 #include "ui/FilesTabWidget/filestabwidget.h"
 #include "widgets//filetreeview.h"
 #include "core/settings/exclusionfilterproxymodel.h"
@@ -125,6 +126,8 @@ signals:
     void setWordWrapSignal(bool checked);
     void setTabReplaceSignal(bool checked);
     void setTabWidthSignal(int width);
+
+    void openTabModule(TabModuleDescription desc);
 
 };
 #endif // IDEWINDOW_H

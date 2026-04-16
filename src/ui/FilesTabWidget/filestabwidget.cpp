@@ -19,6 +19,12 @@ FilesTabWidget::FilesTabWidget(QWidget *parent) {
     connect(tabBar(), &QTabBar::tabMoved, this, &FilesTabWidget::onTabMoved);
     tabBar()->installEventFilter(this);
     QCoreApplication::instance()->installEventFilter(this);
+
+    connect(this, &FilesTabWidget::openTabModule,
+            this, [this](TabModuleDescription desc){
+                if (auto* tab = qobject_cast<FileTab*>(currentWidget()))
+                    emit tab->openTabModule(desc);
+            });
 }
 
 void FilesTabWidget::tabSelect(int index) {
