@@ -40,10 +40,6 @@ qt_add_executable(${PROJECT_NAME}
     widgets/terminal/terminalwidget.cpp
     widgets/terminal/terminalwidget.h
 
-    # Tools / References
-    Tools/References/KeyboardScancodes/keyboardscancodevizwidget.cpp
-    Tools/References/KeyboardScancodes/keyboardscancodevizwidget.h
-
     # Resources
     resources/cremniy_res.qrc
 

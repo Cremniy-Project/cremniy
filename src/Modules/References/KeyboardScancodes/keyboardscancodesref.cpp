@@ -1,7 +1,6 @@
 #include "keyboardscancodesref.h"
 #include "keyboardscancodevizwidget.h"
-#include "ui/MenuBar/Menus/References/referencewindowfactory.h"
-
+#include "core/modules/ModuleManager.h"
 #include <QAbstractItemView>
 #include <QHeaderView>
 #include <QKeyEvent>
@@ -16,8 +15,7 @@
 #include <QVBoxLayout>
 
 static bool registered = []() {
-    ReferenceWindowFactory::instance().registerRefWin(
-        QStringLiteral("2"), []() { return new KeyboardScancodesRef(); });
+    ModuleManager::instance().registerReference("Keyboard Scancodes", "", []() { return new KeyboardScancodesRef(); });
     return true;
 }();
 
@@ -154,16 +152,12 @@ static const RefRow kRefRows[] = {
     {"Pause", "E1 1D 45 …", "Long pause make sequence; break differs"},
 };
 
-KeyboardScancodesRef::KeyboardScancodesRef(QWidget *parent) : ReferenceWindow(parent)
+KeyboardScancodesRef::KeyboardScancodesRef(QWidget *parent)
 {
     initWindow();
     initWidgets();
 }
 
-QString KeyboardScancodesRef::RefWinName()
-{
-    return tr("Keyboard Scan-Codes");
-}
 
 void KeyboardScancodesRef::initWindow()
 {

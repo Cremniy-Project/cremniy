@@ -1,7 +1,7 @@
 #ifndef KEYBOARDSCANCODESREF_H
 #define KEYBOARDSCANCODESREF_H
 
-#include "ui/MenuBar/Menus/References/referencewindow.h"
+#include "core/modules/ReferenceBase.h"
 #include <QFrame>
 
 class QKeyEvent;
@@ -28,13 +28,11 @@ protected:
 
 class QShowEvent;
 
-class KeyboardScancodesRef final : public ReferenceWindow
+class KeyboardScancodesRef final : public ReferenceBase
 {
     Q_OBJECT
 public:
     explicit KeyboardScancodesRef(QWidget *parent = nullptr);
-
-    QString RefWinName() override;
 
 protected:
     void showEvent(QShowEvent *event) override;

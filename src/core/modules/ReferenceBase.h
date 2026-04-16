@@ -6,7 +6,6 @@
 class ReferenceBase : public QWidget {
     Q_OBJECT
 public:
-    explicit ReferenceWindow(QWidget *parent = nullptr) : QWidget(parent) {}
 
 private:
     virtual void initWindow() = 0;
