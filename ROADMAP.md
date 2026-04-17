@@ -21,24 +21,23 @@ Create a **unified tool for system programming** that eliminates the need for sc
 
 ### 🐞 Bugs
 
-- [ ] [Incorrect byte display in HEX-Editor on MacOS](https://github.com/Cremniy-Project/cremniy/issues/43)
 - [ ] [Display bar in HEX-Editor on Windows](https://github.com/Cremniy-Project/cremniy/issues/33)
 
 ### ✨ Improvements and New Tasks
 
-- [ ] 🟡 [Use Breeze icons for files in QTreeView](https://github.com/Cremniy-Project/cremniy/issues/72)
-- [ ] 🟡 [Implement StatusBar](https://github.com/Cremniy-Project/cremniy/issues/73)
 - [ ] 🟡 [Display numbers in different numeral systems on hover](https://github.com/Cremniy-Project/cremniy/issues/28)
-- [ ] 🟡 [Keyboard scancode reference guide](https://github.com/munirov/cremniy/issues/89)
 - [ ] 🟡 [Improve Terminal](https://github.com/munirov/cremniy/issues/100)
-- [ ] 🟡 [Build and run user project](https://github.com/Cremniy-Project/cremniy/issues/6)
 - [ ] 🟢 [Add multilingual support](https://github.com/Cremniy-Project/cremniy/issues/67)
 - [ ] 🟢 [Search string across all project files](https://github.com/Cremniy-Project/cremniy/issues/76)
 - [ ] 🟢 [Git integration](https://github.com/Cremniy-Project/cremniy/issues/42)
 - [x] 🔴 [Implement custom QPlainText for Code Editor](https://github.com/Cremniy-Project/cremniy/issues/56)
 - [x] 🔴 [Optimize data storage in QHexView](https://github.com/Cremniy-Project/cremniy/issues/57)
+- [x] 🟡 [Improve the design of the search bar in the editor](https://github.com/munirov/cremniy/issues/177)
 - [x] 🟡 [Improve Disassembler design](https://github.com/Cremniy-Project/cremniy/issues/55)
+- [x] 🟡 [Keyboard scancode reference guide](https://github.com/munirov/cremniy/issues/89)
 - [x] 🟡 [Add a data storage unit converter](https://github.com/munirov/cremniy/issues/104)
+- [x] 🟡 [Use Breeze icons for files in QTreeView](https://github.com/Cremniy-Project/cremniy/issues/72)
+- [x] 🟡 [Implement StatusBar](https://github.com/Cremniy-Project/cremniy/issues/73)
 - [x] 🟢 [Pin file tabs (FileTab)](https://github.com/Cremniy-Project/cremniy/issues/75)
 - [x] 🟢 [Move files between directories in QTreeView](https://github.com/Cremniy-Project/cremniy/issues/77)
 

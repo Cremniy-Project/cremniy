@@ -25,19 +25,19 @@
 
 ### ✨ Улучшения и новые задачи
 
-- [ ] 🟡 [Реализовать StatusBar](https://github.com/Cremniy-Project/cremniy/issues/73)
 - [ ] 🟡 [Отображение чисел в разных системах счисления при наведении](https://github.com/Cremniy-Project/cremniy/issues/28)
-- [ ] 🟡 [Справочник по скан-кодам клавиш](https://github.com/munirov/cremniy/issues/89)
 - [ ] 🟡 [Улучшить терминал](https://github.com/munirov/cremniy/issues/100)
-- [ ] 🟡 [Сборка и запуск проекта пользователя](https://github.com/Cremniy-Project/cremniy/issues/6)
 - [ ] 🟢 [Добавить многоязычность](https://github.com/Cremniy-Project/cremniy/issues/67)
 - [ ] 🟢 [Поиск строки по всем файлам проекта](https://github.com/Cremniy-Project/cremniy/issues/76)
 - [ ] 🟢 [Работа с Git](https://github.com/Cremniy-Project/cremniy/issues/42)
 - [x] 🔴 [Реализация кастомного QPlainText для Code Editor](https://github.com/Cremniy-Project/cremniy/issues/56)
 - [x] 🔴 [Оптимизировать хранение данных у QHexView](https://github.com/Cremniy-Project/cremniy/issues/57)
-- [x] 🟡 [Использование иконок Breeze для файлов в QTreeView](https://github.com/Cremniy-Project/cremniy/issues/72)
+- [x] 🟡 [Улучшить дизайн формы поиска строки в редакторе](https://github.com/munirov/cremniy/issues/177)
 - [x] 🟡 [Улучшение дизайна Disassembler](https://github.com/Cremniy-Project/cremniy/issues/55)
+- [x] 🟡 [Справочник по скан-кодам клавиш](https://github.com/munirov/cremniy/issues/89)
 - [x] 🟡 [Добавить конвертер единиц хранения данных](https://github.com/munirov/cremniy/issues/104)
+- [x] 🟡 [Использование иконок Breeze для файлов в QTreeView](https://github.com/Cremniy-Project/cremniy/issues/72)
+- [x] 🟡 [Реализовать StatusBar](https://github.com/Cremniy-Project/cremniy/issues/73)
 - [x] 🟢 [Закрепление вкладки файла (FileTab)](https://github.com/Cremniy-Project/cremniy/issues/75)
 - [x] 🟢 [Перемещение файлов по директориям в QTreeView](https://github.com/Cremniy-Project/cremniy/issues/77)
 

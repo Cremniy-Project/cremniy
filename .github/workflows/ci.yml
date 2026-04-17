@@ -3,11 +3,15 @@ name: CI Build
 on:
   push:
     branches: [ main, dev ]
+    paths:
+      - 'src/**'
+      - '.github/workflows/**'
+      
   pull_request:
     branches: [ main, dev ]
-
-env:
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+    paths:
+      - 'src/**'
+      - '.github/workflows/**'
 
 jobs:
   build:
@@ -20,19 +24,22 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
+
+      - name: Setup sccache
+        uses: mozilla-actions/sccache-action@v0.0.9
 
       - name: Install Qt (Windows)
         if: runner.os == 'Windows'
-        uses: jurplel/install-qt-action@v3
+        uses: jurplel/install-qt-action@v4
         with:
           version: '6.8.3'
           arch: 'win64_msvc2022_64'
           cache: true
       
       - name: Install Qt (Linux)
-        if: runner.os != 'Windows'
-        uses: jurplel/install-qt-action@v3
+        if: runner.os == 'Linux'
+        uses: jurplel/install-qt-action@v4
         with:
           version: '6.8.3'
           cache: true
@@ -41,23 +48,31 @@ jobs:
         if: runner.os == 'Linux'
         run: |
           sudo apt-get update
-          sudo apt-get install -y libgl1-mesa-dev libxkbcommon-x11-0 libxcb-icccm4 libxcb-image0 libxcb-keysyms1 libxcb-render-util0 libxcb-xinerama0 libxcb-cursor0
+          sudo apt-get install -y \
+          libgl1-mesa-dev libxkbcommon-x11-0 \
+          libxcb-icccm4 libxcb-image0 libxcb-keysyms1 \
+          libxcb-render-util0 libxcb-xinerama0 libxcb-cursor0 \
+          libxcb-xkb1 libdbus-1-3
 
       - name: Configure CMake (Windows)
         if: runner.os == 'Windows'
         shell: pwsh
-        run: cmake -B build -S src -DCMAKE_BUILD_TYPE=Release -G "Visual Studio 17 2022"
+        env:
+          SCCACHE_GHA_ENABLED: "true"
+        run: cmake -B build -S src -DCMAKE_BUILD_TYPE=Release -G "Visual Studio 17 2022" -DCMAKE_C_COMPILER_LAUNCHER=sccache -DCMAKE_CXX_COMPILER_LAUNCHER=sccache
       
       - name: Configure CMake (Linux)
-        if: runner.os != 'Windows'
-        run: cmake -B build -S src -DCMAKE_BUILD_TYPE=Release
+        if: runner.os == 'Linux'
+        env:
+          SCCACHE_GHA_ENABLED: "true"
+        run: cmake -B build -S src -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_COMPILER_LAUNCHER=sccache -DCMAKE_CXX_COMPILER_LAUNCHER=sccache
 
       - name: Build
         run: cmake --build build --config Release --parallel
 
       - name: Test executable exists (Linux)
-        if: runner.os != 'Windows'
-        run: test -f build/cremniy || test -f build/cremniy.app/Contents/MacOS/cremniy
+        if: runner.os == 'Linux'
+        run: test -f build/cremniy
 
       - name: Test executable exists (Windows)
         if: runner.os == 'Windows'
