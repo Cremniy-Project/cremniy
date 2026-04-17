@@ -127,7 +127,7 @@ void ToolsTabWidget::createTab(const TabModuleDescription& desc, bool isAlways, 
         }
     }
 
-    insertTab(insertIndex, tab, tab->icon(), desc.name);
+    insertTab(insertIndex, tab, tab->icon(), desc.name());
     updateCloseButtons();
 }
 
@@ -210,7 +210,7 @@ void ToolsTabWidget::setTabWidthSlot(int width){
 }
 
 void ToolsTabWidget::openTabModule(TabModuleDescription desc){
-    qDebug() << "ToolsTabWidget::openTabModule(): " << desc.name;
+    qDebug() << "ToolsTabWidget::openTabModule(): " << desc.name();
     this->createTab(desc);
     if (count() > 0) this->setCurrentIndex(count()-1);
 }

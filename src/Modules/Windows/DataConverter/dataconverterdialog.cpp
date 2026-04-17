@@ -3,18 +3,21 @@
 #include <QClipboard>
 #include <QComboBox>
 #include <QAbstractItemView>
-#include <QApplication>
 #include <QFormLayout>
 #include <QGuiApplication>
 #include <QHBoxLayout>
 #include <QLabel>
 #include <QLineEdit>
 #include <QPushButton>
-#include <QVBoxLayout>
 #include "core/modules/ModuleManager.h"
 
+static QString displayName() {
+    return QCoreApplication::translate("DataConverterDialog","Data Converter");
+}
+
 static bool registered = []() {
-    ModuleManager::instance().registerWindow("Data Converter", "", []() { return new DataConverterDialog(); });
+    ModuleManager::instance().registerWindow(
+    &displayName, "", []() { return new DataConverterDialog(); });
     return true;
 }();
 

@@ -11,8 +11,12 @@
 #include <QRegularExpressionValidator>
 #include "core/modules/ModuleManager.h"
 
+static QString displayName() {
+    return QCoreApplication::translate("AsciiCharsRef","ASCII / Unicode Characters");
+}
+
 static bool registered = []() {
-    ModuleManager::instance().registerReference("ASCII/Unicode Characters", "", []() { return new AsciiCharsRef(); });
+    ModuleManager::instance().registerReference(&displayName, "", []() { return new AsciiCharsRef(); });
     return true;
 }();
 

@@ -20,7 +20,7 @@ ReferencesMenu::ReferencesMenu() : BaseMenu(tr("References")) {
         else groupMenu = new QMenu(group);
 
         for (const ReferenceModuleDescription& desc : descRefModules){
-            QAction* newAction = new QAction(desc.name, this);
+            QAction* newAction = new QAction(desc.name(), this);
             groupMenu->addAction(newAction);
             connect(newAction, &QAction::triggered, this, [this, desc](){
                 auto* module = desc.creator();

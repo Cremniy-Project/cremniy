@@ -7,13 +7,11 @@
 #include <QFile>
 #include <QFontDatabase>
 #include <QGuiApplication>
-#include <QHBoxLayout>
 #include <QLabel>
 #include <QMessageBox>
 #include <QProcess>
 #include <QPushButton>
 #include <QRegularExpression>
-#include <QSplitter>
 #include <QStandardPaths>
 #include <QTextEdit>
 #include <QTextStream>
@@ -21,8 +19,13 @@
 #include <QVBoxLayout>
 #include "core/modules/ModuleManager.h"
 
+static QString displayName() {
+    return QCoreApplication::translate("ShellCodeGenerator","Shell code");
+}
+
 static bool registered = []() {
-    ModuleManager::instance().registerWindow("ShellCode Generator", "", []() { return new ShellcodeGeneratorDialog(); });
+    ModuleManager::instance().registerWindow(
+        &displayName, "", []() { return new ShellcodeGeneratorDialog(); });
     return true;
 }();
 

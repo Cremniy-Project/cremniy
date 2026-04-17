@@ -1,12 +1,12 @@
 #include "core/modules/ModuleManager.h"
-#include <qobject.h>
+
 
 ModuleManager& ModuleManager::instance() {
     static ModuleManager inst;
     return inst;
 }
 
-void ModuleManager::registerTab(const QString& name,const QString& group, CreatorTabModule creator, const int& position) {
+void ModuleManager::registerTab(std::function<QString()> name, const QString& group, CreatorTabModule creator, const int& position) {
     TabModuleDescription tabDesc;
     tabDesc.creator = creator;
     tabDesc.name = name;
@@ -14,14 +14,14 @@ void ModuleManager::registerTab(const QString& name,const QString& group, Creato
     m_tabModuleCreators[group.trimmed()].append(tabDesc);
 }
 
-void ModuleManager::registerWindow(const QString& name,const QString& group, CreatorWindowModule creator) {
+void ModuleManager::registerWindow(std::function<QString()> name, const QString& group, CreatorWindowModule creator) {
     WindowModuleDescription winDesc;
     winDesc.creator = creator;
     winDesc.name = name;
     m_windowModuleCreators[group.trimmed()].append(winDesc);
 }
 
-void ModuleManager::registerReference(const QString& name,const QString& group, CreatorReferenceModule creator) {
+void ModuleManager::registerReference(std::function<QString()> name, const QString& group, CreatorReferenceModule creator) {
     ReferenceModuleDescription refDesc;
     refDesc.creator = creator;
     refDesc.name = name;

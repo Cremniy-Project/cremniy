@@ -11,18 +11,18 @@ using CreatorReferenceModule = std::function<ReferenceBase*()>;
 
 struct TabModuleDescription {
     CreatorTabModule creator;
-    QString name;
+    std::function<QString()> name;
     int position;
 };
 
 struct WindowModuleDescription {
     CreatorWindowModule creator;
-    QString name;
+    std::function<QString()> name;
 };
 
 struct ReferenceModuleDescription {
     CreatorReferenceModule creator;
-    QString name;
+    std::function<QString()> name;
 };
 
 class ModuleManager {
@@ -30,14 +30,9 @@ class ModuleManager {
 public:
     static ModuleManager& instance();
 
-    void registerTab(
-                    const QString& name,
-                    const QString& group,
-                    CreatorTabModule creator,
-                    const int& position = 0
-                    );
-    void registerWindow(const QString& name,const QString& group, CreatorWindowModule creator);
-    void registerReference(const QString& name,const QString& group, CreatorReferenceModule creator);
+    void registerTab(std::function<QString()> name, const QString& group, CreatorTabModule creator, const int& position = 0);
+    void registerWindow(std::function<QString()> name, const QString& group, CreatorWindowModule creator);
+    void registerReference(std::function<QString()> name,const QString& group, CreatorReferenceModule creator);
 
     QList<QString> getTabGroups() const;
     QList<QString> getWindowGroups() const;

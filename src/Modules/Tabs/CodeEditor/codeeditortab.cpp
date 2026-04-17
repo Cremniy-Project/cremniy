@@ -14,8 +14,12 @@
 #include <QVBoxLayout>
 #include <QCheckBox>
 
+static QString displayName() {
+    return QCoreApplication::translate("CodeEditorTab", "Code");
+}
+
 static bool registered = []() {
-    ModuleManager::instance().registerTab("Code", "always", []() { return new CodeEditorTab(); }, 100);
+    ModuleManager::instance().registerTab(&displayName, "always", []() { return new CodeEditorTab(); }, 100);
     return true;
 }();
 

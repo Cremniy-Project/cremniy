@@ -14,8 +14,12 @@
 #include <QToolButton>
 #include <QVBoxLayout>
 
+static QString displayName() {
+    return QCoreApplication::translate("KeyboardScancodesRef", "Keyboard Scancodes");
+}
+
 static bool registered = []() {
-    ModuleManager::instance().registerReference("Keyboard Scancodes", "", []() { return new KeyboardScancodesRef(); });
+    ModuleManager::instance().registerReference(displayName, "", []() { return new KeyboardScancodesRef(); });
     return true;
 }();
 
