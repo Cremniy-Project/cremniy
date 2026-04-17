@@ -21,7 +21,7 @@ static QString displayName() {
 };
 
 static bool registered = []() {
-    ModuleManager::instance().registerWindow(
+    ModuleManager::instance().registerModule<WindowBase>(
     &displayName, "", []() { return new ReverseCalculatorDialog(); });
     return true;
 }();

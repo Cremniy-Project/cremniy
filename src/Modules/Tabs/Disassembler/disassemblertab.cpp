@@ -36,7 +36,7 @@ static QString displayName() {
 }
 
 static bool registered = []() {
-    ModuleManager::instance().registerTab(&displayName, "", []() { return new DisassemblerTab(); }, 100);
+    ModuleManager::instance().registerModule<TabBase>(&displayName, "", []() { return new DisassemblerTab(); }, 100);
     return true;
 }();
 

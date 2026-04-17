@@ -16,7 +16,7 @@ static QString displayName() {
 }
 
 static bool registered = []() {
-    ModuleManager::instance().registerReference(&displayName, "", []() { return new AsciiCharsRef(); });
+    ModuleManager::instance().registerModule<ReferenceBase>(&displayName, "", []() { return new AsciiCharsRef(); });
     return true;
 }();
 

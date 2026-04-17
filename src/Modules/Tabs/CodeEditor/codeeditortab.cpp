@@ -19,7 +19,7 @@ static QString displayName() {
 }
 
 static bool registered = []() {
-    ModuleManager::instance().registerTab(&displayName, "always", []() { return new CodeEditorTab(); }, 100);
+    ModuleManager::instance().registerModule<TabBase>(&displayName, "always", []() { return new CodeEditorTab(); }, 100);
     return true;
 }();
 

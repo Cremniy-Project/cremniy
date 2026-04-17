@@ -17,7 +17,7 @@ static QString displayName() {
 }
 
 static bool registered = []() {
-    ModuleManager::instance().registerReference(&displayName, "", []() { return new KeyboardScancodesRef(); });
+    ModuleManager::instance().registerModule<ReferenceBase>(&displayName, "", []() { return new KeyboardScancodesRef(); });
     return true;
 }();
 

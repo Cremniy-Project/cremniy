@@ -14,7 +14,7 @@ static QString displayName() {
 }
 
 static bool registered = []() {
-    ModuleManager::instance().registerTab(&displayName, "always", []() { return new BinaryTab(); }, 200);
+    ModuleManager::instance().registerModule<TabBase>(&displayName, "always", []() { return new BinaryTab(); }, 200);
     return true;
 }();
 
