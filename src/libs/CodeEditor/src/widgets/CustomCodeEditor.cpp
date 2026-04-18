@@ -468,6 +468,9 @@ CustomCodeEditor::CustomCodeEditor(QWidget* parent)
     , m_cursorBytePos(0)
     , m_selectionStart(0)
     , m_selectionLength(0)
+    , m_selectionAnchor(-1)
+    , m_activeMatchStart(-1)
+    , m_activeMatchLength(0)
     , m_updatingSelection(false)
     , m_applyingBufferEdit(false)
     , m_firstVisibleLine(0)
@@ -479,7 +482,6 @@ CustomCodeEditor::CustomCodeEditor(QWidget* parent)
     , m_tabReplaceSize(4)
     , m_tabDisplaySize(4)
     , m_hasUtf8Bom(false)
-    , m_selectionAnchor(-1)
     , m_mouseSelecting(false)
     , m_clickCount(0)
     , m_lastClickTimestamp(0)
@@ -979,6 +981,9 @@ bool CustomCodeEditor::findText(const QString& text, bool forward, Qt::CaseSensi
     const qint64 startLine = lineFromBytePos(startPos);
 
     auto searchInLine = [&](qint64 lineNum, int fromColumn) -> bool {
+        if (fromColumn < 0 && !forward)
+            return false;
+
         const QString lineText = displayTextForLine(lineNum);
         const int index = forward
             ? lineText.indexOf(text, qMax(0, fromColumn), caseSensitivity)
@@ -987,10 +992,12 @@ bool CustomCodeEditor::findText(const QString& text, bool forward, Qt::CaseSensi
         if (index < 0)
             return false;
 
-        m_selectionStart = bytePosForColumn(lineNum, index);
-        m_selectionLength = bytePosForColumn(lineNum, index + text.length()) - m_selectionStart;
+        m_selectionStart = bytePosForRawColumn(lineNum, index);
+        m_selectionLength = bytePosForRawColumn(lineNum, index + text.length()) - m_selectionStart;
         m_cursorBytePos = forward ? m_selectionStart + m_selectionLength : m_selectionStart;
         m_selectionAnchor = m_selectionStart;
+        m_activeMatchStart = m_selectionStart;
+        m_activeMatchLength = m_selectionLength;
         syncSelectionToBuffer();
         ensureCursorVisible();
         emit cursorPositionChanged();
@@ -999,7 +1006,7 @@ bool CustomCodeEditor::findText(const QString& text, bool forward, Qt::CaseSensi
     };
 
     if (forward) {
-        if (searchInLine(startLine, columnForBytePos(startLine, startPos)))
+        if (searchInLine(startLine, rawColumnForBytePos(startLine, startPos)))
             return true;
         for (qint64 lineNum = startLine + 1; lineNum < m_lineIndex->lineCount(); ++lineNum) {
             if (searchInLine(lineNum, 0))
@@ -1010,7 +1017,7 @@ bool CustomCodeEditor::findText(const QString& text, bool forward, Qt::CaseSensi
                 return true;
         }
     } else {
-        if (searchInLine(startLine, columnForBytePos(startLine, startPos) - 1))
+        if (searchInLine(startLine, (int)rawColumnForBytePos(startLine, startPos) - 1))
             return true;
         for (qint64 lineNum = startLine - 1; lineNum >= 0; --lineNum) {
             if (searchInLine(lineNum, displayTextForLine(lineNum).length()))
@@ -1068,8 +1075,8 @@ int CustomCodeEditor::currentMatchIndex(const QString& text, Qt::CaseSensitivity
         int index = lineText.indexOf(text, 0, caseSensitivity);
         while (index >= 0) {
             ++currentIndex;
-            const qint64 matchStart = bytePosForColumn(lineNum, index);
-            const qint64 matchEnd = bytePosForColumn(lineNum, index + text.length());
+            const qint64 matchStart = bytePosForRawColumn(lineNum, index);
+            const qint64 matchEnd = bytePosForRawColumn(lineNum, index + text.length());
             if (matchStart == m_selectionStart && matchEnd - matchStart == m_selectionLength)
                 return currentIndex;
             index = lineText.indexOf(text, index + text.length(), caseSensitivity);
@@ -1632,12 +1639,11 @@ void CustomCodeEditor::contextMenuEvent(QContextMenuEvent* event)
 
     const qint64 clickPos = bytePosFromPoint(viewport()->mapFromGlobal(event->globalPos()));
     if (!hasSelection() || clickPos < m_selectionStart || clickPos > m_selectionStart + m_selectionLength) {
-        m_cursorBytePos = clickPos;
         m_selectionStart = clickPos;
         m_selectionLength = 0;
-        m_selectionAnchor = -1;
-        syncSelectionToBuffer();
-        emit cursorPositionChanged();
+        m_selectionAnchor = clickPos;
+        m_activeMatchStart = -1;
+        m_activeMatchLength = 0;
         viewport()->update();
     }
 
@@ -3389,6 +3395,14 @@ qint64 CustomCodeEditor::bytePosForColumn(qint64 lineNum, qint64 column) const
     return lineStart + m_utf8Decoder->charPosToByte(lineBytes, rawColumn);
 }
 
+qint64 CustomCodeEditor::bytePosForRawColumn(qint64 lineNum, qint64 rawColumn) const
+{
+    const qint64 lineStart = lineVisibleStart(lineNum);
+    const qint64 lineEnd = lineVisibleEnd(lineNum);
+    const QByteArray lineBytes = m_buffer->read(lineStart, lineEnd - lineStart);
+    return lineStart + m_utf8Decoder->charPosToByte(lineBytes, rawColumn);
+}
+
 qint64 CustomCodeEditor::columnForBytePos(qint64 lineNum, qint64 bytePos) const
 {
     const auto& layout = cachedLineLayout(lineNum);
@@ -3398,6 +3412,15 @@ qint64 CustomCodeEditor::columnForBytePos(qint64 lineNum, qint64 bytePos) const
     const QByteArray lineBytes = m_buffer->read(lineStart, lineVisibleEnd(lineNum) - lineStart);
     const int rawColumn = static_cast<int>(m_utf8Decoder->byteToCharPos(lineBytes, relativeBytePos));
     return layout.rawToVisual.value(qBound(0, rawColumn, layout.rawText.length()), layout.displayText.length());
+}
+
+qint64 CustomCodeEditor::rawColumnForBytePos(qint64 lineNum, qint64 bytePos) const
+{
+    const qint64 lineStart = lineVisibleStart(lineNum);
+    const qint64 clampedPos = qBound(lineStart, bytePos, lineVisibleEnd(lineNum));
+    const qint64 relativeBytePos = clampedPos - lineStart;
+    const QByteArray lineBytes = m_buffer->read(lineStart, lineVisibleEnd(lineNum) - lineStart);
+    return static_cast<qint64>(m_utf8Decoder->byteToCharPos(lineBytes, relativeBytePos));
 }
 
 int CustomCodeEditor::visualColumnForRawColumn(const QString& text, int rawColumn) const
@@ -3786,7 +3809,24 @@ void CustomCodeEditor::renderSelection(QPainter* painter)
             const int xStart = lineNumberAreaWidth() + kTextLeftPadding + qRound(displayAdvanceForRange(lineNum, segments[segmentIndex].startColumn, startColumn)) - (m_wordWrapEnabled ? 0 : scrollX);
             const int xEnd = lineNumberAreaWidth() + kTextLeftPadding + qRound(displayAdvanceForRange(lineNum, segments[segmentIndex].startColumn, endColumn)) - (m_wordWrapEnabled ? 0 : scrollX);
             const int y = static_cast<int>(baseVisualLine + segmentIndex) * lineHeight - scrollY;
-            painter->fillRect(QRect(xStart, y, qMax(1, xEnd - xStart), lineHeight), selectionColor);
+            
+            const bool isActiveSearchMatch = (m_activeMatchStart == selStart && m_activeMatchLength == (selEnd - selStart));
+            
+            if (isActiveSearchMatch) {
+                QColor activeColor = selectionColor;
+                activeColor.setAlpha(180); // More opaque
+                painter->fillRect(QRect(xStart, y, qMax(1, xEnd - xStart), lineHeight), activeColor);
+                
+                // Draw border
+                painter->save();
+                QPen pen(palette().highlight().color());
+                pen.setWidth(2);
+                painter->setPen(pen);
+                painter->drawRect(QRect(xStart, y, qMax(1, xEnd - xStart), lineHeight - 1));
+                painter->restore();
+            } else {
+                painter->fillRect(QRect(xStart, y, qMax(1, xEnd - xStart), lineHeight), selectionColor);
+            }
         }
     }
 }

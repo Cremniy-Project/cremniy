@@ -139,6 +139,9 @@ private:
     qint64 m_cursorBytePos;
     qint64 m_selectionStart;
     qint64 m_selectionLength;
+    qint64 m_selectionAnchor;
+    qint64 m_activeMatchStart;
+    qint64 m_activeMatchLength;
     bool m_updatingSelection;
     bool m_applyingBufferEdit;
     
@@ -205,7 +208,9 @@ private:
     void invalidateDisplayLayoutCache(qint64 startLine = -1, qint64 endLine = -1);
     QString displayPrefixForPosition(qint64 lineNum, qint64 bytePos) const;
     qint64 bytePosForColumn(qint64 lineNum, qint64 column) const;
+    qint64 bytePosForRawColumn(qint64 lineNum, qint64 rawColumn) const;
     qint64 columnForBytePos(qint64 lineNum, qint64 bytePos) const;
+    qint64 rawColumnForBytePos(qint64 lineNum, qint64 bytePos) const;
     int visualColumnForRawColumn(const QString& text, int rawColumn) const;
     int rawColumnForVisualColumn(const QString& text, int visualColumn) const;
     QString expandedDisplayText(const QString& text) const;
@@ -264,7 +269,6 @@ private:
         EditGroupDelete
     };
 
-    qint64 m_selectionAnchor;
     bool m_mouseSelecting;
     int m_clickCount;
     qint64 m_lastClickTimestamp;
