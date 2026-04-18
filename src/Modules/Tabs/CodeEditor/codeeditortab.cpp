@@ -179,6 +179,18 @@ void CodeEditorTab::openFindDialog()
     updateSearchUi();
 }
 
+bool CodeEditorTab::showFind()
+{
+    openFindDialog();
+    return true;
+}
+
+bool CodeEditorTab::showReplace()
+{
+    openReplaceDialog();
+    return true;
+}
+
 void CodeEditorTab::openReplaceDialog()
 {
     setReplaceMode(true);
@@ -404,5 +416,4 @@ void CodeEditorTab::setTabWidthSlot(int width) {
     m_codeEditorWidget->setTabDisplaySize(width);
     m_codeEditorWidget->setTabReplaceSize(width);
 }
-
 

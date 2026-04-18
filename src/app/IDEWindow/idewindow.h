@@ -94,7 +94,17 @@ public slots:
     void on_openSettings();
 
     /**
-     * @brief Отображение терминала
+      * @brief Открыть поиск в активной вкладке
+      */
+    void on_Find();
+
+    /**
+      * @brief Открыть замену в активной вкладке
+      */
+    void on_Replace();
+
+    /**
+      * @brief Отображение терминала
      */
     void on_Toggle_Terminal(bool checked);
 

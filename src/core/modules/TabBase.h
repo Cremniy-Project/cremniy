@@ -143,6 +143,16 @@ public slots:
      */
     virtual void setTabWidthSlot(int width) = 0;
 
+    /**
+     * @brief Открыть интерфейс поиска для текущей вкладки, если поддерживается
+     */
+    virtual bool showFind() { return false; }
+
+    /**
+     * @brief Открыть интерфейс замены для текущей вкладки, если поддерживается
+     */
+    virtual bool showReplace() { return false; }
+
 signals:
     /**
      * @brief Status bar information changed

@@ -7,6 +7,8 @@ class EditMenu : public BaseMenu
 {
     Q_OBJECT
 private:
+    QAction* m_find;
+    QAction* m_replace;
     QAction* m_settings;
 public:
     EditMenu();

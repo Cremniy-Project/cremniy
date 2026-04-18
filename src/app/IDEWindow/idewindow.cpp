@@ -7,6 +7,7 @@
 #include <qjsondocument.h>
 #include <qjsonobject.h>
 #include "core/icons/iconprovider.h"
+#include "core/modules/TabBase.h"
 #include <QApplication>
 #include "dialogs/settingsdialog.h"
 #include "ui/MenuBar/menubarbuilder.h"
@@ -131,6 +132,11 @@ IDEWindow::IDEWindow(QString ProjectPath, QWidget *parent)
 
 IDEWindow::~IDEWindow()
 {}
+
+FileTab* IDEWindow::currentFileTab() const
+{
+    return qobject_cast<FileTab*>(m_filesTabWidget ? m_filesTabWidget->currentWidget() : nullptr);
+}
 
 void IDEWindow::on_Toggle_Terminal(bool checked) {
     if (checked && !m_terminal) {
@@ -303,4 +309,30 @@ void IDEWindow::on_SaveFile(){
 void IDEWindow::on_openSettings(){
     SettingsDialog dlg(this);
     dlg.exec();
+}
+
+void IDEWindow::on_Find()
+{
+    auto* fileTab = currentFileTab();
+    if (!fileTab || !fileTab->toolsTabWidget())
+        return;
+
+    auto* currentTool = qobject_cast<TabBase*>(fileTab->toolsTabWidget()->currentWidget());
+    if (!currentTool)
+        return;
+
+    currentTool->showFind();
+}
+
+void IDEWindow::on_Replace()
+{
+    auto* fileTab = currentFileTab();
+    if (!fileTab || !fileTab->toolsTabWidget())
+        return;
+
+    auto* currentTool = qobject_cast<TabBase*>(fileTab->toolsTabWidget()->currentWidget());
+    if (!currentTool)
+        return;
+
+    currentTool->showReplace();
 }

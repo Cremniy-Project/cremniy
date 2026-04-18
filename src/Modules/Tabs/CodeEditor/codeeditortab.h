@@ -94,6 +94,8 @@ public slots:
     void setWordWrapSlot(bool checked) override;
     void setTabReplaceSlot(bool checked) override;
     void setTabWidthSlot(int width) override;
+    bool showFind() override;
+    bool showReplace() override;
 
 };
 

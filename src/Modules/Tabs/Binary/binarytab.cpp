@@ -233,3 +233,9 @@ void BinaryTab::openFindDialog()
         }
     }
 }
+
+bool BinaryTab::showFind()
+{
+    openFindDialog();
+    return true;
+}
