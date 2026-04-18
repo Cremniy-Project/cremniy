@@ -7,6 +7,7 @@
 #include <QUrl>
 #include <QMimeData>
 #include <QDataStream>
+#include <QPushButton>
 
 
 FileTreeView::FileTreeView(QWidget *parent)
@@ -153,9 +154,13 @@ void FileTreeView::dropEvent(QDropEvent *event)
         QString msg = tr("Are you sure you want to move '%1' into '%2'?")
                       .arg(sourceInfo.fileName(), QFileInfo(targetDirPath).fileName());
 
-        auto reply = QMessageBox::question(this, tr("Confirm Move"), msg,
-                                           QMessageBox::Yes | QMessageBox::No);
-        if (reply == QMessageBox::Yes) {
+        QMessageBox confirm_move(QMessageBox::Question, tr("Confirm move"), msg, QMessageBox::NoButton, this);
+        const auto yes = confirm_move.addButton(tr("Yes"), QMessageBox::YesRole);
+        [[maybe_unused]] const auto no = confirm_move.addButton(tr("No"), QMessageBox::NoRole);
+        confirm_move.exec();
+
+        const auto reply = confirm_move.clickedButton();
+        if (reply == yes) {
             if (QFile::rename(sourcePath, targetPath)) {
                 movedAny = true;
                 m_undoMoveHistory.append(qMakePair(targetPath, sourcePath));
