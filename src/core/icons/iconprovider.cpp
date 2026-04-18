@@ -50,27 +50,32 @@ QIcon IconProvider::icon(const QFileInfo &info) const {
     }
 
     // 1. Пытаемся достать из темы (как положено)
+    qDebug() << "[IconProvider] Filename:" << info.fileName() << "| Expected Icon:" << iconName;
+
+    // 1. Пробуем тему
     QIcon ic = QIcon::fromTheme(iconName);
     
-    // 2. ЕСЛИ НЕ НАШЛОСЬ (ic.isNull() или системная иконка вместо нашей)
-    // Пробуем загрузить напрямую из файла в ресурсах
-    if (ic.isNull() || ic.availableSizes().isEmpty()) {
+    if (ic.isNull()) {
+        qDebug() << "[IconProvider] fromTheme FAILED for" << iconName;
+        
+        // 2. Пробуем прямой путь (этот дебаг самый важный)
         QString directPath = QString(":/icons/phoicons/icons/%1.svg").arg(iconName);
         if (QFile::exists(directPath)) {
+            qDebug() << "[IconProvider] Found direct file at" << directPath << ". Attempting to load...";
             ic = QIcon(directPath);
+            if (ic.isNull()) {
+                qWarning() << "[IconProvider] CRITICAL: File exists but QIcon failed to load it! (SVG plugin issue?)";
+            }
+        } else {
+            qDebug() << "[IconProvider] Resource file NOT FOUND at" << directPath;
         }
+    } else {
+        qDebug() << "[IconProvider] fromTheme SUCCESS for" << iconName;
     }
 
-    // Если папка всё еще пустая, пробуем simple
-    if (isFolder && ic.isNull()) {
-        ic = QIcon(":/icons/phoicons/icons/folder-simple.svg");
-    }
-
-    // --- ФИНАЛЬНАЯ ПОКРАСКА ---
     if (!ic.isNull()) {
-        return paintIcon(ic, Qt::white);
+        return paintIcon(ic, isFolder ? QColor("#FFFFFF") : Qt::white);
     }
 
-    // Если совсем ничего не помогло — дефолт ОС
     return QFileIconProvider::icon(info);
 }

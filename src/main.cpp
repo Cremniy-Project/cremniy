@@ -2,6 +2,9 @@
 #include <QCoreApplication>
 #include <QFile>
 #include <QIcon>
+#include <QImageReader>
+#include <QDirIterator>
+#include <QDebug>
 
 #include "app/WelcomeWindow/welcomeform.h"
 
@@ -17,6 +20,19 @@ int main(int argc, char *argv[])
     // Icons
     QIcon::setThemeSearchPaths({":/icons"});
     QIcon::setThemeName("phoicons");         // маленькими буквами!
+    qDebug() << "=== SYSTEM DEBUG ===";
+    qDebug() << "Supported formats:" << QImageReader::supportedImageFormats();
+    qDebug() << "=== THEME DEBUG ===";
+    qDebug() << "Theme Search Paths:" << QIcon::themeSearchPaths();
+    qDebug() << "Current Theme Name:" << QIcon::themeName();
+    QFile themeFile(":/icons/phoicons/index.theme");
+    qDebug() << "index.theme exists in resources:" << themeFile.exists();
+    qDebug() << "=== RESOURCE TREE ===";
+    QDirIterator it(":/icons", QDirIterator::Subdirectories);
+    while (it.hasNext()) {
+        qDebug() << "Found resource:" << it.next();
+    }
+    qDebug() << "====================";
 
     // Style
     QFile baseStyleFile(":/styles/base.qss");
