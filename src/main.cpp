@@ -7,7 +7,7 @@
 
 int main(int argc, char *argv[])
 {
-    putenv("QT_QPA_PLATFORMTHEME", "generic");
+    qputenv("QT_QPA_PLATFORMTHEME", "generic");
     QApplication a(argc, argv);
     QCoreApplication::setOrganizationName("Munirov");
     QCoreApplication::setApplicationName("Cremniy");
