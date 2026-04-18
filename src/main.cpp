@@ -5,6 +5,7 @@
 #include <QImageReader>
 #include <QDirIterator>
 #include <QDebug>
+#include <QResource>
 
 #include "app/WelcomeWindow/welcomeform.h"
 
@@ -19,6 +20,7 @@ int main(int argc, char *argv[])
     // - - Themes - -
 
     // Icons
+    Q_INIT_RESOURCE(phoicons); 
     QIcon::setThemeSearchPaths({":/icons"});
     QIcon::setThemeName("phoicons");         // маленькими буквами!
     
