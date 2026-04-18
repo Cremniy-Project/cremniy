@@ -2,7 +2,6 @@
 #include <QCoreApplication>
 #include <QFile>
 #include <QIcon>
-#include <QResources>
 
 #include "app/WelcomeWindow/welcomeform.h"
 
