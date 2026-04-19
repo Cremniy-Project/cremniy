@@ -16,6 +16,9 @@ class ShellcodeGeneratorDialog : public WindowBase {
 public:
     explicit ShellcodeGeneratorDialog(QWidget* parent = nullptr);
 
+protected:
+    void showEvent(QShowEvent* event) override;
+
 private slots:
     void onAssemble();
     void onCopyOutput();
@@ -25,6 +28,7 @@ private:
     void buildUi();
     void connectSignals();
 
+    void applyHighlighterStyles();
     void setStatus(const QString& msg, bool error = false);
 
     [[nodiscard]] QString currentBits() const;

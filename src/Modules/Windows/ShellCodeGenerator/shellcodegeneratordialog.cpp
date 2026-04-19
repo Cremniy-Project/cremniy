@@ -14,7 +14,7 @@
 #include <QVBoxLayout>
 
 static QString displayName() {
-    return QCoreApplication::translate("ShellCodeGenerator", "Shell code");
+    return QCoreApplication::translate("ShellCodeGenerator", "Shellcode");
 }
 
 static bool registered = []() {
@@ -51,12 +51,6 @@ namespace {
 
     constexpr int kStyleCount = static_cast<int>(std::size(kStyles));
 
-    constexpr auto kEditorStyle =
-        "background-color: #1e1e1e;"
-        "color: #d4d4d4;"
-        "border: 1px solid #3c3c3c;"
-        "selection-background-color: #264f78;";
-
 }
 
 ShellcodeGeneratorDialog::ShellcodeGeneratorDialog(QWidget* parent) : WindowBase(parent) {
@@ -86,6 +80,11 @@ ShellcodeGeneratorDialog::ShellcodeGeneratorDialog(QWidget* parent) : WindowBase
             close();
         }
         });
+}
+
+void ShellcodeGeneratorDialog::showEvent(QShowEvent* event) {
+    WindowBase::showEvent(event);
+    applyHighlighterStyles();
 }
 
 void ShellcodeGeneratorDialog::buildUi() {
@@ -139,20 +138,23 @@ void ShellcodeGeneratorDialog::buildUi() {
     editorsLayout->setSpacing(8);
 
     m_asmInput = new QTextEdit(this);
+    m_asmInput->setObjectName(QStringLiteral("asmInput"));
     m_asmInput->setPlaceholderText(tr("; Enter x86/x64 assembly here…"));
     m_asmInput->setFont(monoFont);
     m_asmInput->setTabStopDistance(32);
-    m_asmInput->setStyleSheet(QString::fromUtf8(kEditorStyle));
     m_asmInput->setLineWrapMode(QTextEdit::NoWrap);
 
+    m_asmInput->ensurePolished();
     m_highlighter = new AsmHighlighter(m_asmInput->document());
 
     m_shellcodeOutput = new QTextEdit(this);
+    m_shellcodeOutput->setObjectName(QStringLiteral("shellcodeOutput"));
     m_shellcodeOutput->setPlaceholderText(tr("// Shellcode output will appear here…"));
     m_shellcodeOutput->setFont(monoFont);
     m_shellcodeOutput->setReadOnly(true);
-    m_shellcodeOutput->setStyleSheet(QString::fromUtf8(kEditorStyle));
     m_shellcodeOutput->setLineWrapMode(QTextEdit::NoWrap);
+
+    applyHighlighterStyles();
 
     editorsLayout->addWidget(m_asmInput, 1);
     editorsLayout->addWidget(m_shellcodeOutput, 1);
@@ -239,6 +241,26 @@ void ShellcodeGeneratorDialog::onAssemble() {
     const QString output = ShellcodeEngine::format(result.bytes, entries, currentStyle(), bits);
     m_shellcodeOutput->setPlainText(output);
     setStatus(tr("OK — %1 bytes assembled.").arg(result.bytes.size()));
+}
+
+void ShellcodeGeneratorDialog::applyHighlighterStyles() {
+    if (!m_highlighter || !m_asmInput) return;
+
+    static const QStringList categories = {
+        "mnemonic", "register", "number", "comment", "string",
+        "directive", "label", "sizePtr", "bracket"
+    };
+
+    QVariantMap theme;
+    for (const QString& cat : categories) {
+        const QString propName = cat + "Color";
+        QVariant v = m_asmInput->property(propName.toUtf8().constData());
+        if (v.isValid()) {
+            theme[cat] = v;
+        }
+    }
+
+    m_highlighter->setColors(theme);
 }
 
 void ShellcodeGeneratorDialog::onCopyOutput() {

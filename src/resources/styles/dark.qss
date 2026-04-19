@@ -308,3 +308,27 @@ QDialog#settingsDialog QLabel#settingsStatusLabel[statusState="ok"] {
 QDialog#settingsDialog QLabel#settingsStatusLabel[statusState="missing"] {
     color: #f85149;
 }
+
+/* Shellcode Generator Styles */
+
+QTextEdit#asmInput, QTextEdit#shellcodeOutput {
+    background-color: #1e1e1e;
+    color: #d4d4d4;
+    border: 1px solid #3c3c3c;
+    selection-background-color: #264f78;
+    font-family: "Consolas", "Monaco", "Courier New", monospace;
+    font-size: 13px;
+}
+
+QTextEdit#asmInput {
+    /* Assembly Syntax Highlighting Palette (Monokai-inspired) */
+    qproperty-mnemonicColor:  #66d9ef; /* Cyan */
+    qproperty-registerColor:  #fd971f; /* Orange/Gold */
+    qproperty-numberColor:    #ae81ff; /* Purple */
+    qproperty-commentColor:   #75715e; /* Dim Grey-Olive */
+    qproperty-stringColor:    #e6db74; /* Soft Yellow */
+    qproperty-directiveColor: #f92672; /* Vibrant Pink */
+    qproperty-labelColor:     #a6e22e; /* Fresh Green */
+    qproperty-sizePtrColor:   #a6e22e; /* Fresh Green */
+    qproperty-bracketColor:   #f8f8f2; /* Off-White */
+}
