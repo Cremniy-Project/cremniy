@@ -38,7 +38,6 @@ void AsmHighlighter::setColors(const QVariantMap& colors) {
 void AsmHighlighter::updateRules() {
     m_rules.clear();
 
-    // 1. General tokens (can be overridden by strings/comments)
     const QString mnemonics =
         QStringLiteral(
             "\\b(?:"
@@ -117,7 +116,6 @@ void AsmHighlighter::updateRules() {
     addRule(QStringLiteral("[\\[\\]]"), m_formats["bracket"]);
     addRule(QStringLiteral("^\\s*[A-Za-z_\\.][A-Za-z0-9_\\.]*\\s*:"), m_formats["label"]);
 
-    // 2. Overriding tokens (strings and comments) applied last
     addRule(QStringLiteral("\"[^\"]*\"|'[^']*'"), m_formats["string"]);
     addRule(QStringLiteral(";[^\n]*"), m_formats["comment"]);
 }

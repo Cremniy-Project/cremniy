@@ -30,6 +30,6 @@ private:
 
     void addRule(const QString& pattern, const QTextCharFormat& fmt);
 
-    // Categories: mnemonic, register, number, comment, string, directive, label, sizePtr, bracket
+    // categories: mnemonic, register, number, comment, string, directive, label, sizePtr, bracket
     QMap<QString, QTextCharFormat> m_formats;
-};
+};
